@@ -13,6 +13,7 @@ class RandomActionWrapper(gym.ActionWrapper):
             return self.env.action_space.sample()
         return action
 
+
 if __name__ == '__main__':
     env = RandomActionWrapper(gym.make("CartPole-v0"))
 
