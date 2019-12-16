@@ -12,7 +12,7 @@ if __name__ == '__main__':
         action = env.action_space.sample()
         obs, reward, done, _ = env.step(action)
         total_reward += reward
-        total_steps +=1
+        total_steps += 1
         if done:
             break
 
