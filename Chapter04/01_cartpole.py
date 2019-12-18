@@ -69,16 +69,16 @@ def filter_batch(batch, percentile):
     reward_mean = float(np.mean(rewards))
 
     train_obs = []
-    train_acts = []
+    train_act = []
     for example in batch:
         if example.reward < reward_bound:
             continue
         train_obs.extend(map(lambda step: step.observation, example.steps))
-        train_acts.extend(map(lambda step: step.action, example.steps))
+        train_act.extend(map(lambda step: step.action, example.steps))
 
     train_obs_v = torch.FloatTensor(train_obs)
-    train_acts_v = torch.LongTensor(train_acts)
-    return train_obs_v, train_acts_v, reward_bound, reward_mean
+    train_act_v = torch.LongTensor(train_act)
+    return train_obs_v, train_act_v, reward_bound, reward_mean
 
 
 if __name__ == '__main__':
@@ -107,5 +107,4 @@ if __name__ == '__main__':
         if reward_m > 199:
             print("Solved!")
             break
-
     writer.close()
