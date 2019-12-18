@@ -61,4 +61,51 @@ def iterate_batches(env, net, batch_size):
             obs = next_obs
 
 
-def filter_batch()
+def filter_batch(batch, percentile):
+    # map(func,list)函数有两个参数，前面一个是函数，后面一个是序列。该函数的意义是对一个序列进行前面参数函数的操作，然后返回一个新的list
+    # 每个episode与之奖励相对应
+    rewards = list(map(lambda s: s.reward, batch))
+    reward_bound = np.percentile(rewards, percentile)
+    reward_mean = float(np.mean(rewards))
+
+    train_obs = []
+    train_acts = []
+    for example in batch:
+        if example.reward < reward_bound:
+            continue
+        train_obs.extend(map(lambda step: step.observation, example.steps))
+        train_acts.extend(map(lambda step: step.action, example.steps))
+
+    train_obs_v = torch.FloatTensor(train_obs)
+    train_acts_v = torch.LongTensor(train_acts)
+    return train_obs_v, train_acts_v, reward_bound, reward_mean
+
+
+if __name__ == '__main__':
+    env = gym.make("CartPole-v0")
+    # 用于记录训练过程的视频
+    # env = gym.wrappers.Monitor(env, directory="mon", force=True)
+    obs_size = env.observation_space.shape[0]
+    n_actions = env.observation_space.n
+
+    net = Net(obs_size, HIDDEN_SIZE, n_actions)
+    objective = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(params=net.parameters(), lr=0.01)
+    writer = SummaryWriter(comment="-cartpole")
+
+    for iter_no, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
+        obs_v, acts_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
+        optimizer.zero_grad()
+        action_scores_v = net(obs_v)
+        loss_v = objective(action_scores_v, acts_v)
+        loss_v.backward()
+        optimizer.step()
+        print("%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f"%(iter_no, loss_v.item(), reward_m, reward_b))
+        writer.add_scalar("loss", loss_v.item(),iter_no)
+        writer.add_scalar("reward_bound", reward_b, iter_no)
+        writer.add_scalar("reward_mean", reward_m, iter_no)
+        if reward_m > 199:
+            print("Solved!")
+            break
+
+    writer.close()
