@@ -2,6 +2,7 @@ import gym
 from collections import namedtuple
 import numpy as np
 from tensorboardX import SummaryWriter
+import random
 
 import torch
 import torch.nn as nn
@@ -80,8 +81,9 @@ def filter_batch(batch, percentile):
     train_act = []
     # 存储本就不多的好的episode
     elite_batch = []
-    for example, disxounted_reward in zip(batch, disc_rewards):
-        if disxounted_reward > reward_bound:
+    # zip()函数将可迭代的对象作为参数，将对象中对应的元素打包成一个个元组，然后返回由这些元组组成的列表
+    for example, discounted_reward in zip(batch, disc_rewards):
+        if discounted_reward > reward_bound:
             continue
         train_obs.extend(map(lambda step: step.observation, example.steps))
         train_act.extend(map(lambda step: step.action, example.steps))
@@ -91,6 +93,7 @@ def filter_batch(batch, percentile):
 
 
 if __name__ == "__main__":
+    random.seed(12345)
     env = DiscreteONeHotWrapper(gym.make("FrozenLake-v0"))
     # env = gym.wrappers.Monitor(env, directory="mon", force=True)
     obs_size = env.observation_space.shape[0]
@@ -98,22 +101,33 @@ if __name__ == "__main__":
 
     net = Net(obs_size, HIDDEN_SIZE, n_actions)
     objective = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(params=net.parameters(), lr=0.01)
+    # 降低学习率以平均更多训练样本
+    optimizer = optim.Adam(params=net.parameters(), lr=0.001)
     writer = SummaryWriter(comment="-frozenlake-tweaked")
 
+    full_batch = []
     for iter_no, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
-        obs_v, acts_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
+        reward_m = float(np.mean(list(map(lambda s:s.reward, batch))))
+        full_batch, obs, acts, reward_b = filter_batch(full_batch+batch, PERCENTILE)
+        if not full_batch:
+            continue
+        obs_v = torch.FloatTensor(obs)
+        acts_v = torch.LongTensor(acts)
+        # 长期保有100个episode
+        full_batch = full_batch[-500:]
+
         optimizer.zero_grad()
         action_scores_v = net(obs_v)
         loss_v = objective(action_scores_v, acts_v)
         loss_v.backward()
         optimizer.step()
-        print("%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f" % (
-            iter_no, loss_v.item(), reward_m, reward_b))
+        print("%d: loss=%.3f, reward_mean=%.3f, reward_bound=%.3f, batch=%d" % (
+            iter_no, loss_v.item(), reward_m, reward_b, len(full_batch)))
         writer.add_scalar("loss", loss_v.item(), iter_no)
         writer.add_scalar("reward_bound", reward_b, iter_no)
         writer.add_scalar("reward_mean", reward_m, iter_no)
-        if reward_m > 199:
+        # 修改训练结束条件
+        if reward_m > 0.8:
             print("Solved!")
             break
     writer.close()
