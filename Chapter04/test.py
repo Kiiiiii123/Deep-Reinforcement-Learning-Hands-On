@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import gym
 from collections import namedtuple
 import numpy as np
@@ -6,6 +7,7 @@ from tensorboardX import SummaryWriter
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
 
 HIDDEN_SIZE = 128
 BATCH_SIZE = 16
@@ -18,17 +20,14 @@ class Net(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(obs_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, n_actions),
+            nn.Linear(hidden_size, n_actions)
         )
 
     def forward(self, x):
         return self.net(x)
 
 
-# 存储python对象序列，两大参数：tuple名字和其中域的名字
-# 总奖励＋总步数
 Episode = namedtuple('Episode', field_names=['reward', 'steps'])
-# 单步的观察值＋选择动作
 EpisodeStep = namedtuple('EpisodeStep', field_names=['observation', 'action'])
 
 
@@ -45,25 +44,19 @@ def iterate_batches(env, net, batch_size):
         action = np.random.choice(len(act_probs), p=act_probs)
         next_obs, reward, is_done, _ = env.step(action)
         episode_reward += reward
-        # 加入这一步
         episode_steps.append(EpisodeStep(observation=obs, action=action))
         if is_done:
-            # 加入这个episode
             batch.append(Episode(reward=episode_reward, steps=episode_steps))
-            # 重置
             episode_reward = 0.0
             episode_steps = []
             next_obs = env.reset()
             if len(batch) == batch_size:
-                # 迭代器
                 yield batch
                 batch = []
-            obs = next_obs
+        obs = next_obs
 
 
 def filter_batch(batch, percentile):
-    # map(func,list)函数有两个参数，前面一个是函数，后面一个是序列。该函数的意义是对一个序列进行前面参数函数的操作，然后返回一个新的list
-    # 每个episode与之奖励相对应
     rewards = list(map(lambda s: s.reward, batch))
     reward_bound = np.percentile(rewards, percentile)
     reward_mean = float(np.mean(rewards))
@@ -81,7 +74,7 @@ def filter_batch(batch, percentile):
     return train_obs_v, train_act_v, reward_bound, reward_mean
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     env = gym.make("CartPole-v0")
     # env = gym.wrappers.Monitor(env, directory="mon", force=True)
     obs_size = env.observation_space.shape[0]
