@@ -101,7 +101,7 @@ if __name__ == '__main__':
         loss_v.backward()
         optimizer.step()
         print("%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f"%(iter_no, loss_v.item(), reward_m, reward_b))
-        writer.add_scalar("loss", loss_v.item(),iter_no)
+        writer.add_scalar("loss", loss_v.item(), iter_no)
         writer.add_scalar("reward_bound", reward_b, iter_no)
         writer.add_scalar("reward_mean", reward_m, iter_no)
         if reward_m > 199:
