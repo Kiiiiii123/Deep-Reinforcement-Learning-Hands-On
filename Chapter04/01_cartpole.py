@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # 用于记录训练过程的视频
     # env = gym.wrappers.Monitor(env, directory="mon", force=True)
     obs_size = env.observation_space.shape[0]
-    n_actions = env.observation_space.n
+    n_actions = env.action_space.n
 
     net = Net(obs_size, HIDDEN_SIZE, n_actions)
     objective = nn.CrossEntropyLoss()
