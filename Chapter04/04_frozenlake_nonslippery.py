@@ -84,10 +84,9 @@ def filter_batch(batch, percentile):
     # zip()函数将可迭代的对象作为参数，将对象中对应的元素打包成一个个元组，然后返回由这些元组组成的列表
     for example, discounted_reward in zip(batch, disc_rewards):
         if discounted_reward > reward_bound:
-            continue
-        train_obs.extend(map(lambda step: step.observation, example.steps))
-        train_act.extend(map(lambda step: step.action, example.steps))
-        elite_batch.append(example)
+            train_obs.extend(map(lambda step: step.observation, example.steps))
+            train_act.extend(map(lambda step: step.action, example.steps))
+            elite_batch.append(example)
 
     return elite_batch, train_obs, train_act, reward_bound
 
