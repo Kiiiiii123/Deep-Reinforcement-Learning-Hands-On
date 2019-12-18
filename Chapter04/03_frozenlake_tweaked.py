@@ -11,18 +11,18 @@ import torch.optim as optim
 HIDDEN_SIZE = 128
 # 每次迭代至少100次episode
 BATCH_SIZE = 100
-PERCENTILE = 70
+PERCENTILE = 30
 # 加入奖励折扣因子以衡量episode的好坏程度
 GAMMA = 0.9
 
 
 # 将数值输入更换为独热编码
-class DiscreteONeHotWrapper(gym.ObservationWrapper):
+class DiscreteOneHotWrapper(gym.ObservationWrapper):
     def __init__(self, env):
-        super(DiscreteONeHotWrapper, self).__init__(env)
+        super(DiscreteOneHotWrapper, self).__init__(env)
         # 断言，判断表达式为假是触发异常，插入调试断点到程序的一种便捷方式
         assert isinstance(env.observation_space, gym.spaces.Discrete)
-        self.observation_space = gym.spaces.Box(0.0, 1.0, (env.observation_space.n,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(0.0, 1.0, (env.observation_space.n, ), dtype=np.float32)
 
     def observation(self, observation):
         res = np.copy(self.observation_space.low)
@@ -94,7 +94,7 @@ def filter_batch(batch, percentile):
 
 if __name__ == "__main__":
     random.seed(12345)
-    env = DiscreteONeHotWrapper(gym.make("FrozenLake-v0"))
+    env = DiscreteOneHotWrapper(gym.make("FrozenLake-v0"))
     # env = gym.wrappers.Monitor(env, directory="mon", force=True)
     obs_size = env.observation_space.shape[0]
     n_actions = env.action_space.n
