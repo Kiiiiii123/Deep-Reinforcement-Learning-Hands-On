@@ -25,3 +25,7 @@ class Net(nn.Module):
         return self.net(x)
 
 
+# 存储python对象序列，两大参数：tuple名字和其中域的名字
+Episode = namedtuple('Episode', field_names=['reward', 'steps'])
+EpisodeStep = namedtuple('EpisodeStep', field_names=['observation', 'action'])
+
