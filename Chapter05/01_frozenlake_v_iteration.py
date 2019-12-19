@@ -7,6 +7,7 @@ GAMMA = 0.9
 # 验证value table的效果
 TEST_EPISODES = 20
 
+
 class Agent:
     def __init__(self):
         self.env = gym.make(ENV_NAME)
