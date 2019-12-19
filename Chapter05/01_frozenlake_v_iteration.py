@@ -5,7 +5,7 @@ from tensorboardX import SummaryWriter
 ENV_NAME = "FrozenLake-v0"
 GAMMA = 0.9
 # 验证value table的效果
-TEST_EPISODE2 = 20
+TEST_EPISODES = 20
 
 class Agent:
     def __init__(self):
@@ -72,8 +72,38 @@ class Agent:
             state = new_state
         return total_reward
 
+    # 对状态的value table进行迭代
+    def value_iteration(self):
+        for state in range(self.env.observation_space.n):
+            state_values = [self.calc_action_value(state, action) for action in range(self.env.action_space.n)]
+            self.values[state] = max(state_values)
 
 
+if __name__ == "__main__":
+    test_env = gym.make(ENV_NAME)
+    agent = Agent()
+    writer = SummaryWriter(comment="-v-iteration")
+
+    ite_no = 0
+    best_reward = 0.0
+    while True:
+        ite_no += 1
+        agent.play_n_random_steps(100)
+        agent.value_iteration()
+
+        reward = 0.0
+        for _ in range(TEST_EPISODES):
+            reward += agent.play_episode(test_env)
+        # 求测试episode的平均奖励
+        reward /= TEST_EPISODES
+        writer.add_scalar("reward", reward, ite_no)
+        if reward > best_reward:
+            print("Best reward updated %.3f -> %.3f" % (best_reward, reward))
+            best_reward = reward
+        if reward > 0.80:
+            print("Solved in %d iterations!" % ite_no)
+            break
+        writer.close()
 
 
 
