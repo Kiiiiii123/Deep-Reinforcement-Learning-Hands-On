@@ -88,6 +88,7 @@ if __name__ == "__main__":
     best_reward = 0.0
     while True:
         ite_no += 1
+        # 随机积累数据
         agent.play_n_random_steps(100)
         agent.value_iteration()
 
