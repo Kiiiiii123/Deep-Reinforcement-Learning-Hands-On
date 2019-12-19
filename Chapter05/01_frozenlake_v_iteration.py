@@ -92,16 +92,16 @@ if __name__ == "__main__":
         agent.play_n_random_steps(100)
         agent.value_iteration()
 
-        reward = 0.0
+        avg_reward = 0.0
         for _ in range(TEST_EPISODES):
-            reward += agent.play_episode(test_env)
+            avg_reward += agent.play_episode(test_env)
         # 求测试episode的平均奖励
-        reward /= TEST_EPISODES
-        writer.add_scalar("reward", reward, ite_no)
-        if reward > best_reward:
-            print("Best reward updated %.3f -> %.3f" % (best_reward, reward))
-            best_reward = reward
-        if reward > 0.80:
+        avg_reward /= TEST_EPISODES
+        writer.add_scalar("reward", avg_reward, ite_no)
+        if avg_reward > best_reward:
+            print("Best reward updated %.3f -> %.3f" % (best_reward, avg_reward))
+            best_reward = avg_reward
+        if avg_reward > 0.80:
             print("Solved in %d iterations!" % ite_no)
             break
         writer.close()
