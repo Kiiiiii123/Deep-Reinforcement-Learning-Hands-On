@@ -33,7 +33,7 @@ class Agent:
             self.state = self.env.reset() if is_done else new_state
 
     # 计算新的状态行为值
-    def cal_action_value(self, state, action):
+    def calc_action_value(self, state, action):
         target_counts = self.transits[(state, action)]
         # 动作被执行的总次数
         total = sum(target_counts.values())
@@ -45,7 +45,36 @@ class Agent:
             action_value += (count/total)*(reward + GAMMA * self.values[tgt_state])
         return action_value
 
-    def
+    # 选择某一状态下的最佳动作
+    def select_action(self, state):
+        best_action, best_value = None, None
+        # 查看所有可能动作的Q值
+        for action in range(self.env.action_space.n):
+            action_value = self.calc_action_value(state, action)
+            # 遍历搜索Q值最大的动作
+            if best_value is None or best_value < action_value:
+                best_value = action_value
+                best_action = action
+        return best_action
+
+    # 利用上述动作选择策略进行效果测试，但是也要加入到table中去
+    def play_episode(self, env):
+        total_reward = 0.0
+        state = env.reset()
+        while True:
+            action = self.select_action(state)
+            new_state, reward, is_done, _ = env.step(action)
+            self.rewards[(state, action, new_state)] = reward
+            self.transits[(state, action)][new_state] += 1
+            total_reward += reward
+            if is_done:
+                break
+            state = new_state
+        return total_reward
+
+
+
+
 
 
 
