@@ -8,6 +8,7 @@ GAMMA = 0.9
 ALPHA = 0.2
 TEST_SPISODES = 20
 
+
 class Agent:
     def __init__(self):
         self.env = gym.make(ENV_NAME)
@@ -57,23 +58,23 @@ if __name__ == "__main__":
     agent = Agent()
     writer = SummaryWriter(comment="-q-learning")
 
-    ite_no = 0
+    iter_no = 0
     best_reward = 0.0
     while True:
-        ite_no += 1
+        iter_no += 1
         s, a, r, next_s = agent.sample_env()
         agent.value_update(s, a, r, next_s)
 
         reward = 0.0
         for _ in range(TEST_SPISODES):
             reward += agent.play_episode(test_env)
-        avg_reward = reward / TEST_SPISODES
-        writer.add_scalar("avg_reward", avg_reward, ite_no)
-        if avg_reward > best_reward:
-            print("Best reward updated %.3f -> %.3f" % (best_reward, avg_reward))
+        reward = reward / TEST_SPISODES
+        writer.add_scalar("reward", reward, iter_no)
+        if reward > best_reward:
+            print("Best reward updated %.3f -> %.3f" % (best_reward, reward))
             best_reward = reward
-        if best_reward > 0.80:
-            print("Solved in %d iterations!" % ite_no)
+        if reward > 0.80:
+            print("Solved in %d iterations!" % iter_no)
             break
     writer.close()
 
