@@ -107,7 +107,7 @@ class ImageToPytorch(gym.ObservationWrapper):
         self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(old_shape[-1], old_shape[0], old_shape[1]), dtype=np.float32)
 
         def observation(self, observation):
-            return np.moveaxis(observation , 2, 0)
+            return np.moveaxis(observation, 2, 0)
 
 
 # uint8->float32，归一化为[0,1]
