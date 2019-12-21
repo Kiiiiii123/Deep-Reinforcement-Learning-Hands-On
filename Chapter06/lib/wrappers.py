@@ -99,6 +99,7 @@ class BufferWrapper(gym.ObservationWrapper):
         return self.buffer
 
 
+# HWC转换成Pytorch所需的CHW形式
 class ImageToPytorch(gym.ObservationWrapper):
     def __init__(self, env):
         super(ImageToPytorch, self).__init__(env)
