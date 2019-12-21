@@ -166,7 +166,7 @@ if __name__ == "__main__":
         if len(buffer) < REPLAY_START_SIZE:
             continue
 
-        if frame_idx % SYNC_TARGET_FRAMES == 0
+        if frame_idx % SYNC_TARGET_FRAMES == 0:
             tgt_net.load_state_dict(net.state_dict())
 
         optimizer.zero_grad()
