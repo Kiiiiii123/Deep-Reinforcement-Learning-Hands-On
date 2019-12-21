@@ -1,5 +1,5 @@
-from lib import wrappers
-from lib import dqn_model
+from Chapter06.lib import wrappers
+from Chapter06.lib import dqn_model
 
 import argparse
 import time
@@ -47,10 +47,51 @@ class ExperienceBuffer:
         def append(self, experience):
             self.buffer.append(experience)
 
-        # ｃｏｎｇBuffer中按照batch大小进行样本数据的随机采样
+        # 从Buffer中按照batch大小进行样本数据的随机采样
         def sample(self, batch_size):
             indices = np.random.choice(len(self.buffer), batch_size, replace=False)
-            # 将对象中可迭代的元素打包成一个个元组，并返回元组构成的列表
+            # 将对象中可迭代的元素打包成一个个元组，并返回元组构成的列表，*操作符的作用是将元组解包
             states, actions, rewards, dones, next_states = zip(*[self.buffer[idx] for idx in indices])
             # 返回numpy数组方便后续计算loss
             return np.array(states), np.array(actions), np.array(rewards, dtype=np.float32), np.array(dones, dtype=np.uint8), np.array(next_states)
+
+
+# 智能体与环境交互并将结果存储到experience buffer中
+class Agent:
+    def __init__(self, env, exp_buffer):
+        self.env = env
+        self.exp_buffer = exp_buffer
+        self._reset()
+
+    def _reset(self):
+        self.state = self.env.reset()
+        self.total_reward = 0.0
+
+    # epsilon-greedy策略
+    def play_step(self, net, epsilon=0.0, device='cpu'):
+        done_reward = None
+
+        if np.random.random() < epsilon:
+            action = self.env.action_space.sample()
+        else:
+            state_a = np.array([self.state], copy=False)
+            state_v = torch.tensor(state_a).to(device)
+            q_vals_v = net(state_v)
+            _, act_v = torch.max(q_vals_v, dim=1)
+            action = int(act_v.item())
+        new_state, reward, is_done, _ = self.env.step(action)
+        self.total_reward += reward
+
+        exp = Experience(self.state, action, reward, is_done, new_state)
+        self.exp_buffer.append(exp)
+        self.state = new_state
+        if is_done:
+            done_reward = self.total_reward
+            self._reset()
+        return done_reward
+
+
+# 传入两个网络才能计算loss
+def calc_loss(batch, net, tgt_net, device='cpu'):
+    states, actions, rewards, dones, next_states = batch
+
