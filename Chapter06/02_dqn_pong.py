@@ -24,5 +24,13 @@ BATCH_SIZE = 32
 REPLAY_SIZE = 10000
 # Replay Buffer积累够了才开始训练
 REPLAY_START_SIZE = 10000
+# Adam最优化学习率
 LEARNING_RATE = 1e-4
+# 同步两个网络权重的频率
 SYNC_TARGET_FRAMES = 1000
+
+# epsilon数值变化策略
+EPSILON_DECAY_LAST_FRAME = 10 ** 5
+EPSILON_START = 1.0
+EPSILON_FINAL = 0.02
+
