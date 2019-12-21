@@ -34,3 +34,23 @@ EPSILON_DECAY_LAST_FRAME = 10 ** 5
 EPSILON_START = 1.0
 EPSILON_FINAL = 0.02
 
+Experience = collections.namedtuple('Experience', field_names=['State', 'action', 'reward', 'done', 'new_state'])
+
+
+class ExperienceBuffer:
+    def __init__(self, capacity):
+        self.buffer = collections.deque(maxlen=capacity)
+
+        def __len__(self):
+            return len(self.buffer)
+
+        def append(self, experience):
+            self.buffer.append(experience)
+
+        # ｃｏｎｇBuffer中按照batch大小进行样本数据的随机采样
+        def sample(self, batch_size):
+            indices = np.random.choice(len(self.buffer), batch_size, replace=False)
+            # 将对象中可迭代的元素打包成一个个元组，并返回元组构成的列表
+            states, actions, rewards, dones, next_states = zip(*[self.buffer[idx] for idx in indices])
+            # 返回numpy数组方便后续计算loss
+            return np.array(states), np.array(actions), np.array(rewards, dtype=np.float32), np.array(dones, dtype=np.uint8), np.array(next_states)
