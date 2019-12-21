@@ -100,4 +100,26 @@ class BufferWrapper(gym.ObservationWrapper):
 
 
 class ImageToPytorch(gym.ObservationWrapper):
+    def __init__(self, env):
+        super(ImageToPytorch, self).__init__(env)
+        old_shape = self.observation_space.shape
+        self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(old_shape[-1], old_shape[0], old_shape[1]), dtype=np.float32)
 
+        def observation(self, observation):
+            return np.moveaxis(observation , 2, 0)
+
+
+# uint8->float32，归一化为[0,1]
+class ScaledFloatFrame(gym.ObservationWrapper):
+    def observation(self, obs):
+        return np.array(obs).astype(np.float32) / 255.0
+
+
+def make_env(env_name):
+    env = gym.make(env_name)
+    env = MaxAndSkipEnv(env)
+    env = FireResetEnv(env)
+    env = ProcessFrame84(env)
+    env = ImageToPytorch(env)
+    env = BufferWrapper(env)
+    return ScaledFloatFrame(env)
