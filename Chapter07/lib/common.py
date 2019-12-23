@@ -89,6 +89,7 @@ class RewardTracker:
     def __exit__(self, *args):
         self.writer.close()
 
+    # 当前迭代次数，帧处理速度，epsilon值，平均奖励值，
     def reward(self, reward, frame, epsilon=None):
         self.total_rewards.append(reward)
         speed = (frame - self.ts_frame) / (time.time() - self.ts)
