@@ -31,7 +31,7 @@ if __name__ == "__main__":
     agent = ptan.agent.DQNAgent(net, selector, device=device)
 
     # 记录采样经验
-    exp_source = ptan.experience.ExperienceFirstLast(env, agent, gamma=params['gamma'], steps_count=1)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params['gamma'], steps_count=1)
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params['replay_size'])
 
     # 优化器以及训练迭代计数
