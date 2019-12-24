@@ -56,7 +56,7 @@ def calc_loss_dqn(batch, net, tgt_net, gamma, device="cpu"):
     next_state_values[done_mask] = 0.0
 
     # 计算损失值
-    expected_state_action_values = next_state_values.detach() * gamma +rewards_v
+    expected_state_action_values = next_state_values.detach() * gamma + rewards_v
     return nn.MSELoss()(state_action_values, expected_state_action_values)
 
 
