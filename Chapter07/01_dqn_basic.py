@@ -1,9 +1,12 @@
 import gym
 import ptan
 import argparse
+
 import torch
 import torch.optim as optim
+
 from tensorboardX import SummaryWriter
+
 from lib import dqn_model, common
 
 if __name__ == "__main__":
