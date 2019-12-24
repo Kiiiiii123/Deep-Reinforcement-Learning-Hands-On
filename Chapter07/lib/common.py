@@ -45,6 +45,7 @@ def calc_loss_dqn(batch, net, tgt_net, gamma, device="cpu"):
 
     # 转换为张量
     states_v = torch.tensor(states).to(device)
+    print(states_v)
     next_states_v = torch.tensor(next_states).to(device)
     actiosn_v = torch.tensor(actions).to(device)
     rewards_v = torch.tensor(rewards).to(device)
