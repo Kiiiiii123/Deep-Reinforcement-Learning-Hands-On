@@ -4,7 +4,7 @@ import argparse
 import torch
 import torch.optim as optim
 from tensorboardX import SummaryWriter
-from lib import common, dqn_model
+from lib import dqn_model, common
 
 if __name__ == "__main__":
     params = common.HYPERPARAMS['pong']
