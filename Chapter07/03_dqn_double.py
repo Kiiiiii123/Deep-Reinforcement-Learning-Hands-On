@@ -44,7 +44,7 @@ def calc_values_of_states(states, net, device="cpu"):
     for batch in np.array_split(states, 64):
         states_v = torch.tensor(batch).to(device)
         action_values_v = net(states_v)
-        best_action_values_v = action_values_v.max(1)[1]
+        best_action_values_v = action_values_v.max(1)[0]
         mean_vals.append(best_action_values_v.mean().item())
     return np.mean(mean_vals)
 
@@ -74,5 +74,43 @@ if __name__ == "__main__":
     optimizer = optim.Adam(net.parameters(), lr=params['learning_rate'])
 
     frame_idx = 0
+    # 在初始replay buffer填满后在填写该变量
     eval_states = None
+
+    with common.RewardTracker(writer, params['stop_reward']) as reward_tracker:
+        # 开始训练循环
+        while True:
+            frame_idx += 1
+            buffer.populate(1)
+            epsilon_tracker.frame(frame_idx)
+
+            new_rewards = exp_source.pop_total_rewards()
+            if new_rewards:
+                if reward_tracker.reward(new_rewards[0], frame_idx, selector.epsilon):
+                    break
+
+            if len(buffer) < params['replay_initial']:
+                continue
+
+            # 取出用于评估过估计的状态并转换为numpy数组
+            if eval_states is None:
+                eval_states = buffer.sample(STATES_TO_EVALUATE)
+                eval_states = [np.array(transition.state, copy=False) for transition in eval_states]
+                eval_states = np.array(eval_states, copy=False)
+
+            optimizer.zero_grad()
+            batch = buffer.sample(params['batch_size'])
+            # 注意开关double DQN的参数
+            loss_v = calc_loss(batch, net, tgt_net.target_model, gamma=params['gamma'], device=device, double=args.double)
+            loss_v.backward()
+            optimizer.step()
+
+            if frame_idx % params['target_net_sync'] == 0:
+                tgt_net.sync()
+
+            if frame_idx % EVAL_EVERY_FRAME == 0:
+                mean_val = calc_values_of_states(eval_states, net, device=device)
+                writer.add_scalar("values_mean", mean_val, frame_idx)
+
+
 
