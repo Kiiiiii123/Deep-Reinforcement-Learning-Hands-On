@@ -25,7 +25,7 @@ HYPERPARAMS = {
 
 # 将样本数据解包到numpy数组
 def unpack_batch(batch):
-    states, actions, rewards, dones, last_states = [], [], [], [], [], []
+    states, actions, rewards, dones, last_states = [], [], [], [], []
     for exp in batch:
         state = np.array(exp.state, copy=False)
         states.append(state)
