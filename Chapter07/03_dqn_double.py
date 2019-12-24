@@ -108,6 +108,7 @@ if __name__ == "__main__":
             if frame_idx % params['target_net_sync'] == 0:
                 tgt_net.sync()
 
+            # 每过一百帧评估一次
             if frame_idx % EVAL_EVERY_FRAME == 0:
                 mean_val = calc_values_of_states(eval_states, net, device=device)
                 writer.add_scalar("values_mean", mean_val, frame_idx)
