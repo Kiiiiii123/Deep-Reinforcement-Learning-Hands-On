@@ -35,8 +35,10 @@ class PrioReplayBuffer:
             max_prio = self.priorities.max() if self.buffer else 1.0
             for _ in range(count):
                 sample = next(self.exp_source_iter)
+                # 未满则继续加入
                 if len(self.buffer) < self.capacity:
                     self.buffer.append(sample)
+                # 已满则进行样本替换
                 else:
                     self.buffer[self.pos] = sample
                 self.priorities[self.pos] = max_prio
