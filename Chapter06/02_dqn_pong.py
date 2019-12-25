@@ -111,6 +111,7 @@ def calc_loss(batch, net, tgt_net, device='cpu'):
     expected_state_action_values = next_state_values * GAMMA +rewards_v
     return nn.MSELoss()(state_action_value, expected_state_action_values)
 
+
 if __name__ == "__main__":
     # 进行命令行解析
     parser = argparse.ArgumentParser()
