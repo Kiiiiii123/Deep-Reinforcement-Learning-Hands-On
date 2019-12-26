@@ -41,17 +41,38 @@ class PrioReplayBuffer:
                 # 已满则进行样本替换
                 else:
                     self.buffer[self.pos] = sample
+                # 新加入的样本优先度最高
                 self.priorities[self.pos] = max_prio
+                # 样本的加入按照顺序
                 self.pos = (self.pos + 1) % self.capacity
 
         # 采样时将优先度转换成采样概率
         def sample(self, batch_size, beta=0.4):
+            # 根据优先度计算被概率，根据概率进行采样
             if len(self.buffer) == self.capacity:
                 prios = self.priorities
             else:
                 prios = self.priorities[:self.pos]
+            # 优先度高的变得更重要
             probs = prios ** self.prob_alpha
             probs /= probs.sum()
+            # 采样
+            indices = np.random.choice(len(self.buffer), batch_size, p=probs)
+            samples = [self.buffer[idx] for idx in indices]
+            # 为采样出的样本设置权重用于补偿独立同分布
+            total = len(self.buffer)
+            weights = (total * probs[indices]) ** (-beta)
+            weights /= weights.max()
+            # 索引用于为被采样的样本更新优先度
+            return samples, indices, weights
+
+        # 更新优先度
+        def update_priorities(self, batch_indices, batch_priorities):
+            for idx, prio in zip(batch_indices, batch_priorities):
+                self.priorities[idx] = prio
+
+
+
 
 
 
