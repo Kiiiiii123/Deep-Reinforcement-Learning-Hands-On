@@ -71,21 +71,23 @@ class DistributionalDQN(nn.Module):
         fc_out = self.fc(conv_out)
         return fc_out.view(batch_size, -1, N_ATOMS)
 
-    # 从概率分布中获取Q-values
+    # 对输出应用softmax函数并保持张量形式
+    def apply_softmax(self, t):
+        # 只针对单个分布应用softmax，因为求的是(state,action)对的奖励值，view函数起到的是reshape的作用
+        return self.softmax(t.view(-1, N_ATOMS)).view(t.size())
+
+    # 从概率分布中获取Q-values，奖励期望值
     def both(self, x):
         cat_out = self(x)
         probs = self.apply_softmax(cat_out)
         weights = probs * self.supports
+        # 按列相加求和
         res = weights.sum(dim=2)
         return cat_out, res
 
-    # 计算Q-values
+    # 提取Q-values
     def qvals(self, x):
         return self.both(x)[1]
-
-    # 对输出应用softmax函数并保持张量形式
-    def apply_softmax(self, t):
-        return self.softmax(t.view(-1, N_ATOMS)).view(t.size())
 
 
 def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
@@ -98,6 +100,7 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
 
     # next state distribution
     next_distr_v, next_qvals_v = tgt_net.both(next_states_v)
+    # 贪心策略选择动作用于与DQN形成对照组
     next_actions = next_qvals_v.max(1)[1].data.cpu().numpy()
     next_distr = tgt_net.apply_softmax(next_distr_v).data.cpu().numpy()
 
