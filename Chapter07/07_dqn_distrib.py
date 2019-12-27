@@ -113,6 +113,7 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
 
     # 求网路输出并计算两个分布之间的KL散度
     distr_v = net(states_v)
+    # log_softmax函数在softmax函数的基础上在进行log操作
     state_action_values = distr_v[range(batch_size), actions_v.data]
     state_log_sm_v = F.log_softmax(state_action_values, dim=1)
     proj_distr_v = torch.tensor(proj_distr).to(device)
