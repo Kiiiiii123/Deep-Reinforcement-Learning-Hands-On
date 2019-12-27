@@ -95,7 +95,7 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
     batch_size = len(batch)
 
     states_v = torch.tensor(states).to(device)
-    actions = torch.tensor(actions).to(device)
+    actions_v = torch.tensor(actions).to(device)
     next_states_v = torch.tensor(next_states).to(device)
 
     # next state distribution
@@ -104,8 +104,22 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
     next_actions = next_qvals_v.max(1)[1].data.cpu().numpy()
     next_distr = tgt_net.apply_softmax(next_distr_v).data.cpu().numpy()
 
-    next_best_distr = next_distr[range(batch_size), next_actions]
+    # 最佳动作下的概率分布
+    next_best_distr =next_distr[range(batch_size), next_actions]
     dones = dones.astype(np.bool)
+
+    # 对概率分布进行投影，投影出的概率分布是期望网络输出的目标概率分布
+    proj_distr = common.distr_projection(next_best_distr, rewards, dones, Vmin, Vmax, N_ATOMS, gamma)
+
+    # 求网路输出并计算两个分布之间的KL散度
+    distr_v = net(states_v)
+    state_action_values = distr_v[range(batch_size), actions_v.data]
+    state_log_sm_v = F.log_softmax(state_action_values, dim=1)
+    proj_distr_v = torch.tensor(proj_distr).to(device)
+    loss_v = -state_log_sm_v * proj_distr_v
+    return loss_v.sum(dim=1).mean()
+
+
 
 
 
