@@ -140,6 +140,7 @@ def distr_projection(next_distr, rewards, dones, Vmin, Vmax, n_atoms, gamma):
         b_j = (tz_j - Vmin) / delta_z
         l = np.floor(b_j).astype(np.int64)
         u = np.ceil(b_j).astype(np.int64)
+        # 处于episode完结处的样本再次进行划分
         eq_mask = u == l
         eq_dones = dones.copy()
         eq_dones[dones] = eq_mask
