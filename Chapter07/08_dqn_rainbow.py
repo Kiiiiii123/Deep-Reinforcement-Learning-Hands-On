@@ -100,6 +100,36 @@ def calc_loss(batch, batch_weights, net, tgt_net, gamma, device="cpu"):
     batch_weights_v = torch.tensor(batch_weights).to(device)
 
     # Double DQN方法，主网络选择动作，目标网络获取值
+    # 以前调用两次以计算网络输出，在GPU上并不高效，这里将当前状态与下一状态一起传入
+    distr_v, qvals_v = net.both(torch.cat((states_v, next_states_v)))
+    next_qvals_v = qvals_v[batch_size:]
+    distr_v = distr_v[:batch_size]
+
+    # 根据主网络选择下一个状态下的动作
+    next_actions_v = next_qvals_v.max(1)[1]
+    # 根据目标网络获得状态行为值分布
+    next_distr_v = tgt_net(next_states_v)
+    next_best_distr_v = next_distr_v[range(batch_size), next_actions_v.data]
+    next_best_distr_v = tgt_net.apply_spftmax(next_best_distr_v)
+    next_best_distr = next_best_distr_v.data.cpu().numpy()
+
+    # 转到CPU之后进行投影
+    dones = dones.astype(np.bool)
+    proj_distr = common.distr_projection(next_best_distr, rewards, dones, Vmin, Vmax, N_ATOMS, gamma)
+
+    state_action_values = distr_v[range(batch_size), actions_v.data]
+    state_log_sm_v = F.log_softmax(state_action_values, dim=1)
+
+    # 计算KL散度
+    proj_distr_v = torch.tensor(proj_distr)
+    loss_v = -state_log_sm_v * proj_distr_v
+    loss_v = batch_weights * loss_v.sum(dim=1)
+    return loss_v.mean(), loss_v + 1e-5
+
+
+if __name__ == "__main__":
+
+
 
 
 
