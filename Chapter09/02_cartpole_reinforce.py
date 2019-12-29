@@ -69,4 +69,8 @@ if __name__ == "__main__":
         batch_actions.append(int(exp.action))
         cur_rewards.append(exp.reward)
 
-
+        if exp.last_state is None:
+            # 列表扩充
+            batch_qvals.extend(calc_qvals(cur_rewards))
+            cur_rewards.clear()
+            batch_episodes += 1
