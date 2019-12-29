@@ -128,8 +128,54 @@ def calc_loss(batch, batch_weights, net, tgt_net, gamma, device="cpu"):
 
 
 if __name__ == "__main__":
+    params = common.HYPERPARAMS['pong']
+    params['epsilon_frames'] *= 2
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
+    args = parser.parse_args()
+    device = torch.device("cuda" if args.cuda else "cpu")
 
+    env = gym.make(params['env_name'])
+    env = ptan.common.wrappers.wrap_dqn(env)
 
+    writer = SummaryWriter(comment="-" + params["run_name"] + "-rainbow")
+    net = RainbowDQN(env.observation_space.shape, env.action_space.n).to(device)
+    tgt_net = ptan.agent.TargetNet(net)
+    agent = ptan.agent.DQNAgent(lambda x:net.qvals(x), ptan.actions.ArgmaxActionSelector(), device=device)
 
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params["gamma"], steps_count=REWARD_STEPS)
+    buffer = ptan.experience.PrioritizedReplayBuffer(exp_source, params["replay_size"], PRIO_REPLAY_ALPHA)
+    optimizer = optim.Adam(net.parameters(), lr=params['learning_rate'])
+
+    frame_idx = 0
+    beta = BETA_START
+
+    with common.RewardTracker(writer, params["stop_reward"]) as reward_tracker:
+        while True:
+            frame_idx += 1
+            buffer.populate(1)
+            beta = min(1.0, BETA_START + frame_idx * (1 - BETA_START) / BETA_FRAMES)
+
+            new_rewards = exp_source.pop_total_rewards()
+            if new_rewards:
+                if reward_tracker.reward(new_rewards[0], frame_idx):
+                    break
+
+            if len(buffer) < params['replay_initial']:
+                continue
+
+            optimizer.zero_grad()
+            # 每个样本按优先级采样并附带权重
+            batch, batch_indices, batch_weights = buffer.sample(params['batch_size'], beta)
+            # n-steps
+            loss_v, sample_prios_v = calc_loss(batch, batch_weights, net, tgt_net.model, params['gamma'] ** REWARD_STEPS, device=device)
+            loss_v.backward()
+            optimizer.step()
+            # 根据损失值更新采样优先级
+            buffer.update_priorities(batch_indices, sample_prios_v.data.cpu().numpy())
+
+            # 更新目标网络
+            if frame_idx % params["target_net_sync"] == 0:
+                tgt_net.sync()
 
 
