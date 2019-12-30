@@ -56,6 +56,7 @@ if __name__ == "__main__":
 
     # 记录整体情况
     total_rewards = []
+    step_idx = 0
     done_episodes = 0
 
     # 抓取样本训练数据的变量
@@ -83,7 +84,7 @@ if __name__ == "__main__":
             total_rewards.append(reward)
             # 取最近的100个奖励求平均
             mean_rewards = float(np.mean(total_rewards[-100:]))
-            print("%d: reward: %6.2f, mean_100: %6.2f, episodex: %d"% (step_idx, reward, mean_rewards, done_episodes))
+            print("%d: reward: %6.2f, mean_100: %6.2f, episodes: %d"% (step_idx, reward, mean_rewards, done_episodes))
             writer.add_scalar("reward", reward, step_idx)
             writer.add_scalar("reward_100", mean_rewards, step_idx)
             writer.add_scalar("episodes", done_episodes, step_idx)
