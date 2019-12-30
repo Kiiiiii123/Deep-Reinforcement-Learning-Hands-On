@@ -24,8 +24,8 @@ class PGN(nn.Module):
             nn.Linear(128, n_actions)
         )
 
-        def forward(self, x):
-            return self.net(x)
+    def forward(self, x):
+        return self.net(x)
 
 
 # 以完整episode的奖励为输入，输出该步以后能得到的奖励
@@ -50,13 +50,12 @@ if __name__ == "__main__":
     # 使用全新的agent接口，对输出使用softmax将输出转换为概率，每观察一次输出一次动作概率，随机采样选择动作
     agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor, apply_softmax=True)
 
-    exp_source = ptan.experience.ExperienceFirstLast(env, agent, gamma=GAMMA)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
 
     # 记录整体情况
     total_rewards = []
-    step_idx = 0
     done_episodes = 0
 
     # 抓取样本训练数据的变量
@@ -64,13 +63,14 @@ if __name__ == "__main__":
     cur_rewards = []
     batch_states, batch_actions, batch_qvals = [], [], []
 
+    # agent不断与环境交互采样
     for step_idx, exp in enumerate(exp_source):
         batch_states.append(exp.state)
         batch_actions.append(int(exp.action))
         cur_rewards.append(exp.reward)
 
         if exp.last_state is None:
-            # 列表扩充
+            # local reward转换成Q-values
             batch_qvals.extend(calc_qvals(cur_rewards))
             cur_rewards.clear()
             batch_episodes += 1
@@ -81,6 +81,7 @@ if __name__ == "__main__":
             done_episodes += 1
             reward = new_rewards[0]
             total_rewards.append(reward)
+            # 取最近的100个奖励求平均
             mean_rewards = float(np.mean(total_rewards[-100:]))
             print("%d: reward: %6.2f, mean_100: %6.2f, episodex: %d"% (step_idx, reward, mean_rewards, done_episodes))
             writer.add_scalar("reward", reward, step_idx)
@@ -92,6 +93,7 @@ if __name__ == "__main__":
 
         # 每次训练徐足够的完整episodes
         if batch_episodes < EPISODE_TO_TRAIN:
+            # continue表示循环中后续的代码不再执行
             continue
 
         optimizer.zero_grad()
@@ -109,6 +111,7 @@ if __name__ == "__main__":
         loss_v.backward()
         optimizer.step()
 
+        # 每四个episodes训练一次并清零
         batch_episodes = 0
         batch_states.clear()
         batch_actions.clear()
