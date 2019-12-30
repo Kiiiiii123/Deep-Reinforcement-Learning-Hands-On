@@ -68,7 +68,7 @@ if __name__ == "__main__":
             done_episodes += 1
             reward = new_rewards[0]
             total_rewards.append(reward)
-            mean_rewards = float(np.mean(total_rewards)[-100:])
+            mean_rewards = float(np.mean(total_rewards[-100:]))
             print("%d: reward: %6.2f, mean_100: %6.2f, episodes: %d"% (step_idx, reward, mean_rewards, done_episodes))
             writer.add_scalar("reward", reward, step_idx)
             writer.add_scalar("reward_100", mean_rewards, step_idx)
@@ -82,7 +82,7 @@ if __name__ == "__main__":
             continue
 
         states_v = torch.FloatTensor(batch_states)
-        batch_actions_t = torch.FloatTensor(batch_actions)
+        batch_actions_t = torch.LongTensor(batch_actions)
         batch_scales_v = torch.FloatTensor(batch_scales)
 
         # 求policy loss
