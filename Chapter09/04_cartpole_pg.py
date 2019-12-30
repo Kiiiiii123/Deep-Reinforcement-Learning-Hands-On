@@ -101,10 +101,33 @@ if __name__ == "__main__":
         loss_v.backward()
         optimizer.step()
 
-        # 计算KL散度比较先前策略与优化一步后的策略上的变化
+        # 计算KL散度比较先前策略与优化一步后的策略上的变化，用于监视
+        new_logits_v = net(states_v)
+        new_prob_v = F.softmax(new_logits_v, dim=1)
+        kl_div_v = -((new_prob_v / prob_v).log() * prob_v).sum(dim=1).mean()
+        writer.add_scalar("kl", kl_div_v.item(), step_idx)
 
+        # 对当前训练步中的梯度进行统计
+        grad_max = 0.0
+        grad_means = 0.0
+        grad_count = 0
+        for p in net.parameters():
+            grad_max = max(grad_max, p.grad.abs().max().item())
+            grad_means += (p.grad ** 2).mean().sqrt().item()
+            grad_count += 1
 
+        # 将全部数据添加到监控
+        writer.add_scalar("baseline", baseline, step_idx)
+        writer.add_scalar("entropy", entropy_v.item(), step_idx)
+        writer.add_scalar("batch_scales", np.mean(batch_scales), step_idx)
+        writer.add_scalar("loss_entropy", entropy_loss_v.item(), step_idx)
+        writer.add_scalar("loss_policy", loss_policy_v.item(), step_idx)
+        writer.add_scalar("loss_total", loss_v.item(),step_idx)
+        writer.add_scalar("grad_l2", grad_means/grad_count, step_idx)
+        writer.add_scalar("grad_max", grad_max, step_idx)
 
+        batch_states.clear()
+        batch_actions.clear()
+        batch_scales.clear()
 
-
-
+    writer.close()
