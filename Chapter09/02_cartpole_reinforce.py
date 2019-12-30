@@ -28,7 +28,7 @@ class PGN(nn.Module):
             return self.net(x)
 
 
-# 以完整episode的奖励为输入，以截止某一个step时的奖励列表
+# 以完整episode的奖励为输入，输出该步以后能得到的奖励
 def calc_qvals(rewards):
     res = []
     sum_r = 0.0
@@ -74,3 +74,44 @@ if __name__ == "__main__":
             batch_qvals.extend(calc_qvals(cur_rewards))
             cur_rewards.clear()
             batch_episodes += 1
+
+        # 在episode完结处执行，回报当前进展
+        new_rewards = exp_source.pop_total_rewards()
+        if new_rewards:
+            done_episodes += 1
+            reward = new_rewards[0]
+            total_rewards.append(reward)
+            mean_rewards = float(np.mean(total_rewards[-100:]))
+            print("%d: reward: %6.2f, mean_100: %6.2f, episodex: %d"% (step_idx, reward, mean_rewards, done_episodes))
+            writer.add_scalar("reward", reward, step_idx)
+            writer.add_scalar("reward_100", mean_rewards, step_idx)
+            writer.add_scalar("episodes", done_episodes, step_idx)
+            if mean_rewards > 195:
+                print("Solved in %d steps and %d episodes!"% (step_idx, done_episodes))
+                break
+
+        # 每次训练徐足够的完整episodes
+        if batch_episodes < EPISODE_TO_TRAIN:
+            continue
+
+        optimizer.zero_grad()
+        states_v = torch.FloatTensor(batch_states)
+        batch_actions_t = torch.LongTensor(batch_actions)
+        batch_qvals_v = torch.FloatTensor(batch_qvals)
+
+        # 计算loss，网络的分值输出为logits
+        logits_v = net(states_v)
+        log_prob_v = F.log_softmax(logits_v, dim=1)
+        log_prob_actions_v = batch_qvals_v * log_prob_v[range(len(batch_states)), batch_actions_t]
+        # 由于Pytorch中的optimizer只进行损失函数的最小化，因此这里加负号
+        loss_v = -log_prob_actions_v.mean()
+
+        loss_v.backward()
+        optimizer.step()
+
+        batch_episodes = 0
+        batch_states.clear()
+        batch_actions.clear()
+        batch_qvals.clear()
+
+    writer.close()
