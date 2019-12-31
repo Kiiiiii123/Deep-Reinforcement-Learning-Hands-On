@@ -19,6 +19,7 @@ ENTROPY_BETA = 0.1
 BATCH_SIZE = 128
 
 REWARD_STEPS = 10
+# 最近一万帧求baseline
 BASELINE_STEPS = 1000000
 # 梯度裁切
 GRAD_L2_CLIP = 0.1
@@ -62,6 +63,25 @@ if __name__ == "__main__":
 
     net = common.AtariPGN(envs[0].observation_space.shape, envs[0].action_space.n).to(device)
     print(net)
+
+    agent = ptan.agent.PolicyAgent(net, apply_softmax=True, device=device)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+
+    optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
+
+    total_rewards = []
+    step_idx = 0
+    done_episodes = 0
+    train_step_idx = 0
+    baseline_buf = MeanBuffer(BASELINE_STEPS)
+
+    batch_states, batch_actions, batch_scales = [], [], []
+    m_baseline, m_batch_scales, m_loss_entropy, m_loss_policy, m_loss_total = [], [], [], [], []
+    m_grad_max, m_grad_mean = [], []
+    sum_reward = 0.0
+
+    with common.RewardTracker(writer, stop_reward=18) as tracker:
+
 
 
 
