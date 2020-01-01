@@ -35,6 +35,7 @@ def calc_qvals(rewards):
         sum_r += r
         res.append(sum_r)
     res = list(reversed(res))
+    # 这里将列表中的每个折扣奖励减去baseline
     mean_q = np.mean(res)
     return [q - mean_q for q in res]
 
