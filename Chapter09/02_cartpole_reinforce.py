@@ -71,7 +71,7 @@ if __name__ == "__main__":
         cur_rewards.append(exp.reward)
 
         if exp.last_state is None:
-            # local reward转换成Q-values
+            # local reward转换成Q-values，extend函数将可迭代对象中的每个元素逐个添加到列表中
             batch_qvals.extend(calc_qvals(cur_rewards))
             cur_rewards.clear()
             batch_episodes += 1
