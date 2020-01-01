@@ -109,7 +109,7 @@ if __name__ == "__main__":
             log_prob_actions_v = batch_scale_v * log_prob_v[range(BATCH_SIZE), batch_actions_t]
             loss_policy_v = -log_prob_actions_v.mean()
 
-            prob_v = F.softmax(batch_states, dim=1)
+            prob_v = F.softmax(logits_v, dim=1)
             entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()
             entropy_loss_v = -ENTROPY_BETA * entropy_v
             loss_v = loss_policy_v + entropy_loss_v
@@ -128,7 +128,7 @@ if __name__ == "__main__":
             grad_means = 0.0
             grad_count = 0
             for p in net.parameters():
-                m_grad_max = max(m_grad_max, p.grad.abs().max().item())
+                grad_max = max(grad_max, p.grad.abs().max().item())
                 grad_means += (p.grad ** 2).mean().sqrt().item()
                 grad_count += 1
 
