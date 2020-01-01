@@ -29,6 +29,7 @@ Episode = namedtuple('Episode', field_names=['reward', 'steps'])
 EpisodeStep = namedtuple('EpisodeStep', field_names=['observation', 'action'])
 
 
+# 环境交互采样过程
 def iterate_batches(env, net, batch_size):
     batch = []
     episode_reward = 0.0
