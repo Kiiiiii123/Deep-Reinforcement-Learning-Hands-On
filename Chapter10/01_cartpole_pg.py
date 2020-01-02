@@ -101,7 +101,7 @@ if __name__ == "__main__":
         # 方向传播处的改动以抓取除熵奖金之外的loss
         loss_policy_v.backward(retain_graph=True)
         # concatenate为数组拼接方法，
-        grads = np.concatenate([p.grad.data.numpy() for p in net.parameters() if p.grad is not None])
+        grads = np.concatenate([p.grad.data.numpy().flatten() for p in net.parameters() if p.grad is not None])
 
         prob_v = F.softmax(logits_v, dim=1)
         entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()
