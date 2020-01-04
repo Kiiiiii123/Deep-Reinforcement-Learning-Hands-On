@@ -78,7 +78,7 @@ def unpack_batch(batch, net, device='cpu'):
     states_v = torch.FloatTensor(states).to(device)
     actions_t = torch.LongTensor(actions).to(device)
 
-        # handle rewards，求出目标值ref_vals_v用于计算loss
+    # handle rewards，求出目标值ref_vals_v用于计算loss
     rewards_np = np.array(rewards, dtype=np.float32)
     if not_done_idx:
         last_states_v = torch.FloatTensor(last_states).to(device)
