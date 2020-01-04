@@ -75,20 +75,20 @@ def unpack_batch(batch, net, device='cpu'):
         if exp.last_state is not None:
             not_done_idx.append(idx)
             last_states.append(np.array(exp.last_state, copy=False))
-        states_v = torch.FloatTensor(states).to(device)
-        actions_t = torch.LongTensor(actions).to(device)
+    states_v = torch.FloatTensor(states).to(device)
+    actions_t = torch.LongTensor(actions).to(device)
 
         # handle rewards，求出目标值ref_vals_v用于计算loss
-        rewards_np = np.array(rewards, dtype=np.float32)
-        if not_done_idx:
-            last_states_v = torch.FloatTensor(last_states).to(device)
-            # 网络输出V(s)的近似
-            last_vals_v = net(last_states_v)[1]
-            last_vals_np = last_vals_v.data.cpu().numpy()[:, 0]
-            rewards_np[not_done_idx] += GAMMA ** REWARD_STEPS * last_vals_np
+    rewards_np = np.array(rewards, dtype=np.float32)
+    if not_done_idx:
+        last_states_v = torch.FloatTensor(last_states).to(device)
+        # 网络输出V(s)的近似
+        last_vals_v = net(last_states_v)[1]
+        last_vals_np = last_vals_v.data.cpu().numpy()[:, 0]
+        rewards_np[not_done_idx] += GAMMA ** REWARD_STEPS * last_vals_np
 
-        ref_vals_v = torch.FloatTensor(rewards_np).to(device)
-        return states_v, actions_t, ref_vals_v
+    ref_vals_v = torch.FloatTensor(rewards_np).to(device)
+    return states_v, actions_t, ref_vals_v
 
 
 if __name__ == "__main__":
