@@ -160,6 +160,16 @@ if __name__ == "__main__":
 
                 tb_tracker.track("advantage", adv_v, step_idx)
                 tb_tracker.track("values", value_v, step_idx)
+                tb_tracker.track("batch_rewards", vals_ref_v, step_idx)
+                tb_tracker.track("loss_entropy", entropy_loss_v, step_idx)
+                tb_tracker.track("loss_policy", loss_policy_v, step_idx)
+                tb_tracker.track("loss_value", loss_value_v, step_idx)
+                tb_tracker.track("loss_total", loss_v, step_idx)
+                tb_tracker.track("grad_l2", np.sqrt(np.mean(np.square(grads))), step_idx)
+                tb_tracker.track("grad_max", np.max(np.abs(grads)), step_idx)
+                tb_tracker.track("grad_var", np.var(grads), step_idx)
+
+
 
 
 
