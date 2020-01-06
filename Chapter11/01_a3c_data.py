@@ -61,6 +61,18 @@ if __name__ == "__main__":
     device = 'cuda' if args.cuda else 'cpu'
     writer = SummaryWriter(comment='-a3c-data' + NAME + "_" +args.name)
 
+    env = make_env()
+    # 将网络移到cuda设备
+    net = common.AtariA2C(env.observation_space.shape, env.action_space.n).to(device)
+    # 共享网络权重
+    net.share_memory()
+    optimizer = optim.Adam(net.parameters(), lr=, eps=1e-3)
+
+    # 设置进程池
+    train_queue = mp.Queue(maxsize=PROCESSES_COUNT)
+    data_proc_list = []
+    for _ in range(PROCESSES_COUNT):
+
 
 
 
