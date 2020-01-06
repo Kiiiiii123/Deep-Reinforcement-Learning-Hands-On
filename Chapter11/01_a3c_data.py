@@ -31,3 +31,9 @@ NAME = 'pong'
 REWARD_BOUND = 18
 
 
+def make_env():
+    return ptan.common.wrappers.wrap_dqn(gym.make(ENV_NAME))
+
+
+
+
