@@ -99,6 +99,7 @@ if __name__ == "__main__":
                     states_v, actions_t, vals_ref_v = common.unpack_batch(batch, net, last_val_gamma = GAMMA ** REWARD_STEPS, device=device)
                     batch.clear()
 
+                    # 标准的a2c损失与梯度计算
                     optimizer.zero_grad()
                     logits_v, value_v= net(states_v)
                     loss_value_v = F.mse_loss(value_v.squeeze(-1), vals_ref_v)
@@ -111,8 +112,10 @@ if __name__ == "__main__":
                     prob_v = F.softmax(logits_v, dim=1)
                     entropy_loss_v = ENTROPY_BETA*(prob_v * log_prob_v).sum(dim=1).mean()
 
+                    # 总体损失计算方式与前不同
                     loss_v = entropy_loss_v + loss_policy_v + loss_value_v
                     loss_v.backward()
+                    # 梯度裁切
                     nn_utils.clip_grad_norm_(net.parameters(), CLIP_GRAD)
                     optimizer.step()
 
@@ -129,9 +132,4 @@ if __name__ == "__main__":
             # 结束运行子进程并等待
             p.terminate()
             p.join()
-
-
-
-
-
 
