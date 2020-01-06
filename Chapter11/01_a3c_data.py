@@ -35,5 +35,16 @@ def make_env():
     return ptan.common.wrappers.wrap_dqn(gym.make(ENV_NAME))
 
 
+TotalReward = collections.namedtuple('TotalReward', field_names='reward')
+
+
+# 在子进程中执行（与抓取、发送样本相关）
+def data_func(net, device, train_queue):
+    envs = [make_env() for _ in range(NUM_ENVS)]
+    agent = ptan.agent.PolicyAgent(lambda x: net(x)[0], device = device, apply_softmax=True)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_BOUND)
+
+
+
 
 
