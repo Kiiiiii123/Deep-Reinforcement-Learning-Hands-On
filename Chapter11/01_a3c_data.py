@@ -68,11 +68,38 @@ if __name__ == "__main__":
     net.share_memory()
     optimizer = optim.Adam(net.parameters(), lr=, eps=1e-3)
 
-    # 设置进程池
+    # 创建用于向我们传递数据的队列
     train_queue = mp.Queue(maxsize=PROCESSES_COUNT)
     data_proc_list = []
     for _ in range(PROCESSES_COUNT):
+        # 开始不断开启子进程
+        data_proc = mp.Process(target=data_func, args=(net, device, train_queue))
+        data_proc.start()
+        data_proc_list.append(data_proc)
 
+    batch = []
+    step_idx = 0
+
+    try:
+        with common.RewardTracker(writer, stop_reward=REWARD_BOUND) as tracker:
+            with ptan.common.utils.TBMeanTracker(writer, batch_size=100) as tb_tracker:
+                while True:
+                    # 从队列获取并处理可能的TotalReward对象
+                    train_entry = train_queue.get()
+                    if isinstance(train_entry, TotalReward):
+                        if tracker.reward(train_entry.reward, step_idx):
+                            break
+                        continue
+
+                    step_idx += 1
+                    batch.append(train_entry)
+                    if len(batch) < BATCH_SIZE:
+                        continue
+
+                    states_v, actions_v, vals_ref_v = common.unpack_batch(batch, net, last_val_gamma = GAMMA ** REWARD_STEPS, device=device)
+                    batch.clear()
+
+                    optimizer.zero_grad()
 
 
 
