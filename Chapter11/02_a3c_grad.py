@@ -55,9 +55,29 @@ def grads_func(proc_name, net, device, train_queue):
                 new_rewards = exp_source.pop_total_rewards()
                 if new_rewards and tracker.reward(new_rewards[0], frame_idx):
                     break
+
                 batch.append(exp)
                 if len(batch) < GRAD_BATCH:
                     continue
+
+                states_v, actions_t, vals_ref_v = common.unpack_batch(batch, net, last_val_gamma=GAMMA ** REWARD_STEPS, device=device)
+                batch.clear()
+
+                net.zero_grad()
+                logits_v, value_v = net(states_v)
+                loss_value_v = F.mse_loss(value_v.sequeeze(-1), vals_ref_v)
+
+                log_prob_v = F.log_softmax(logits_v, dim=1)
+                adv_v = vals_ref_v - value_v.detach()
+                log_prob_actions_v = adv_v * log_prob_v[range(GRAD_BATCH), actions_t]
+                loss_policy_v = -log_prob_actions_v.mean()
+
+                prob_v = F.softmax(logits_v, dim=1)
+                entropy_loss_v = ENTROPY_BETA * (prob_v * log_prob_v).sum(dim=1).mean()
+
+                loss_v = loss_value_v + entropy_loss_v + loss_policy_v
+                loss_v.backward()
+
 
 
 
