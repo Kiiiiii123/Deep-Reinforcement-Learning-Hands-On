@@ -37,4 +37,15 @@ def make_env():
     return ptan.common.wrappers.wrap_dqn(gym.make(ENV_NAME))
 
 
+# 子进程中执行的函数
+def grads_func(proc_name, net, device, train_queue):
+    envs = [make_env() for _ in range(NUM_ENVS)]
+
+    agent = ptan.agent.PolicyAgent(lambda x:net(x)[0], device=device, apply_softmax=True)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+
+    batch = []
+    frame_idx = 0
+
+
 
