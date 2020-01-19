@@ -117,7 +117,6 @@ if __name__ == '__main__':
         data_proc.start()
         data_proc_list.append(data_proc)
 
-    batch = []
     step_idx = 0
     grad_buffer = None
 
