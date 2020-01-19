@@ -76,7 +76,47 @@ def grads_func(proc_name, net, device, train_queue):
                 entropy_loss_v = ENTROPY_BETA * (prob_v * log_prob_v).sum(dim=1).mean()
 
                 loss_v = loss_value_v + entropy_loss_v + loss_policy_v
+                # 梯度全部存放在Tensor.grad中用于传递，网络参数同样是共享的。但是梯度在子进程中本地分配
                 loss_v.backward()
+
+                tb_tracker.track('advantage', adv_v, frame_idx)
+                tb_tracker.track("values", value_v, frame_idx)
+                tb_tracker.track("batch_rewards", vals_ref_v, frame_idx)
+                tb_tracker.track("loss_entropy", entropy_loss_v, frame_idx)
+                tb_tracker.track("loss_policy", loss_policy_v, frame_idx)
+                tb_tracker.track("loss_value", loss_value_v, frame_idx)
+                tb_tracker.track("loss_total", loss_v, frame_idx)
+
+                # 收集梯度并放到seperate buffer中
+                nn_utils.clip_grad_norm_(net.parameters(), CLIP_GRAD)
+                grads = [param.grad.data.cpu().numpy() if param.grad is not None else None for param in net.parameters()]
+                train_queue.put(grads)
+
+    # 表示训练过程已经结束
+    train_queue.put(None)
+
+
+if __name__ == '__main__':
+    mp.set_start_method('spawn')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cuda', default=False, action='store_true', help='Name of the run')
+    args = parser.parse_args()
+    device = 'cuda' if args.cuda else 'cpu'
+
+    env = make_env()
+    # 创建网络并共享权重
+    net = common.AtariA2C(env.observation_space.shape, env.action_space.n).to(device)
+    net.share_memory()
+
+    optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
+    train_dequeue = mp.Queue(maxsize=PROCESSES_COUNT)
+    data_proc_list = []
+    for proc_idx in range(PROCESSES_COUNT):
+        proc_name = '-a3c-grad_' + NAME + '_' + args.name + '#%d' % proc_idx
+        data_proc = mp.Process(target=grads_func, args=(proc_name, net, device, train_dequeue))
+        data_proc.start()
+        data_proc_list.append(data_proc)
+
 
 
 
