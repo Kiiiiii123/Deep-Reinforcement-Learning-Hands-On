@@ -23,6 +23,8 @@ NUM_ENVS = 15
 
 GRAD_BATCH = 64
 TRAIN_BATCH = 2
-
+ENV_NAME = 'PongNoFrameskip-v4'
+NAME = 'pong'
+REWARD_BOUND = 18
 
 
