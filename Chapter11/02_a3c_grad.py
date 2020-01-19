@@ -37,7 +37,7 @@ def make_env():
     return ptan.common.wrappers.wrap_dqn(gym.make(ENV_NAME))
 
 
-# 子进程中执行的函数
+# 子进程中执行的函数，每个子进程需要执行的操作很多，有自己的Tensorboard监测数据，train_dequeue将计算的梯度传递给中心进程
 def grads_func(proc_name, net, device, train_queue):
     envs = [make_env() for _ in range(NUM_ENVS)]
 
@@ -46,6 +46,8 @@ def grads_func(proc_name, net, device, train_queue):
 
     batch = []
     frame_idx = 0
+    writer = SummaryWriter(comment=proc_name)
+
 
 
 
