@@ -8,6 +8,7 @@ from tensorboardX import SummaryWriter
 
 import torch.nn.utils as nn_utils
 import torch.nn.functional as F
+
 import torch.optim as optim
 # Pytorch对多进程的封装
 import torch.multiprocessing as mp
@@ -59,14 +60,14 @@ if __name__ == "__main__":
     parser.add_argument("-n", '--name', required=True, help='Name of the run')
     args = parser.parse_args()
     device = 'cuda' if args.cuda else 'cpu'
-    writer = SummaryWriter(comment='-a3c-data' + NAME + "_" +args.name)
+    writer = SummaryWriter(comment='-a3c-data' + NAME + "_" + args.name)
 
     env = make_env()
     # 将网络移到cuda设备
     net = common.AtariA2C(env.observation_space.shape, env.action_space.n).to(device)
     # 共享网络权重
     net.share_memory()
-    optimizer = optim.Adam(net.parameters(), lr=, eps=1e-3)
+    optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
 
     # 创建用于向我们传递数据的队列
     train_queue = mp.Queue(maxsize=PROCESSES_COUNT)
