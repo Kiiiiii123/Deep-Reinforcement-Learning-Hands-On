@@ -109,14 +109,43 @@ if __name__ == '__main__':
     net.share_memory()
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
-    train_dequeue = mp.Queue(maxsize=PROCESSES_COUNT)
+    train_queue = mp.Queue(maxsize=PROCESSES_COUNT)
     data_proc_list = []
     for proc_idx in range(PROCESSES_COUNT):
         proc_name = '-a3c-grad_' + NAME + '_' + args.name + '#%d' % proc_idx
-        data_proc = mp.Process(target=grads_func, args=(proc_name, net, device, train_dequeue))
+        data_proc = mp.Process(target=grads_func, args=(proc_name, net, device, train_queue))
         data_proc.start()
         data_proc_list.append(data_proc)
 
+    batch = []
+    step_idx = 0
+    grad_buffer = None
+
+    try:
+        while True:
+            train_entry = train_queue.get()
+            if train_entry is None:
+                break
+
+            step_idx += 1
+            if grad_buffer is None:
+                grad_buffer = train_entry
+            else:
+                for tgt_grad, grad in zip(grad_buffer, train_entry):
+                    tgt_grad += grad
+
+            if step_idx % TRAIN_BATCH == 0:
+                for param, grad in zip(net.parameters(), grad_buffer):
+                    param.grad = torch.FloatTensor(grad).to(device)
+
+                nn_utils.clip_grad_norm_(net.parameters(), CLIP_GRAD)
+                optimizer.step()
+                grad_buffer = None
+
+    finally:
+        for p in data_proc_list:
+            p.terminate()
+            p.join()
 
 
 
