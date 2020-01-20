@@ -31,6 +31,7 @@ class ModelA2C(nn.Module):
         return self.mu(base_out), self.var(base_out), self.value(base_out)
 
 
+# 将观察转换到动作
 class AgentA2C(ptan.agent.BaseAgent):
     def __init__(self, net, device='cpu'):
         self.net = net
