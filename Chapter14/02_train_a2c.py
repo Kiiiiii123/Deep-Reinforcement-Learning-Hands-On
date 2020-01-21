@@ -83,6 +83,7 @@ if __name__ == '__main__':
                     tb_tracker.track('episode_steps', steps[0], step_idx)
                     tracker.reward(rewards[0], step_idx)
 
+                # 每隔1000步进行一次测试，结果被监控，网络权重被保存
                 if step_idx % TEST_ITERS == 0:
                     ts = time.time()
                     rewards, steps = test_net(net, test_env, device=device)
