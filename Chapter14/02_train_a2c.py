@@ -55,3 +55,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
+    save_path = os.path.join('saves', 'a2c' + args.name)
+    # 创建路径
+    os.makedirs(save_path, exist_ok=True)
+
+    env = gym.make(ENV_ID)
+    test_env = gym.make(ENV_ID)
+
+    net = model.ModelA2C(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
+    print(net)
+
