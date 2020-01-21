@@ -42,3 +42,16 @@ def test_net(net, env, count=10, device='cpu'):
     return rewards / count, steps / count
 
 
+def calc_logprob(mu_v, var_v, actions_v):
+    p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
+    p2 = - torch.log(torch.sqrt(2 * mu_v * math.pi * var_v))
+    return p1 + p2
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", default=False, action='store_true', help='Enable CUDA')
+    parser.add_argument("-n", "--name", required=True, help="Name of the run")
+    args = parser.parse_args()
+    device = torch.device("cuda" if args.cuda else "cpu")
+
