@@ -108,6 +108,7 @@ if __name__ == '__main__':
                 optimizer.zero_grad()
                 mu_v, var_v, value_v = net(states_v)
 
+                # 在倒数第一个维度上增加一个维度
                 loss_value_v = F.mse_loss(value_v.squeeze(-1), vals_ref_v)
 
                 adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
