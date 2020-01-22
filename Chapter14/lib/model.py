@@ -47,4 +47,40 @@ class AgentA2C(ptan.agent.BaseAgent):
             return actions, agent_states
 
 
+class DDPGActor(nn.Module):
+    def __init__(self, obs_size, act_size):
+        super(DDPGActor,self).__init__()
+
+        self.net = nn.Sequential(
+            nn.Linear(obs_size, 400),
+            nn.ReLU(),
+            nn.Linear(400, 300),
+            nn.ReLU(),
+            nn.Linear(300, act_size),
+            nn.Tanh()
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
+class DDPGCritic(nn.Module):
+    def __init__(self, obs_size, act_size):
+        super(DDPGCritic, self).__init__()
+
+        self.obs_net = nn.Sequential(
+            nn.Linear(obs_size, 400),
+            nn.ReLU()
+        )
+
+        self.out_net = nn.Sequential(
+            nn.Linear(400 + act_size, 300),
+            nn.ReLU(),
+            nn.Linear(300, 1)
+        )
+
+    # 除了输入观察以外还要输入动作
+    def forward(self, x, a):
+        obs = self.obs_net(x)
+        return self.out_net(torch.cat([obs, a], dim=1))
 
