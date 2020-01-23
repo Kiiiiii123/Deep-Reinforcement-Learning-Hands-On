@@ -113,6 +113,13 @@ class AgentDDPG(ptan.experience.BaseAgent):
                     a_state = np.zeros(shape = action.shape, dtype=np.float32)
                 a_state += self.ou_teta * (self.ou_mu - a_state)
                 a_state += self.ou_sigma * np.random.normal(size=action.shape)
+                action += self.ou_epsilon * a_state
+                new_a_states.append(a_state)
+        else:
+            new_a_states = agent_states
+
+        actions = np.clip(actions, -1, 1)
+        return actions, new_a_states
 
 
 
