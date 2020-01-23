@@ -91,3 +91,20 @@ if __name__ == '__main__':
 
                 batch = buffer.sample(BATCH_SIZE)
                 states_v, actions_v, rewards_v, dones_mask, last_states_v = common.unpack_batch_ddpg(batch, device=device)
+
+                # 训练critic
+                crt_opt.zero_grad()
+                q_v = crt_net(states_v, actions_v)
+                last_act_v = tgt_act_net.target_model(last_states_v)
+                q_last_v = tgt_crt_net.target_model(last_states_v, last_act_v)
+                q_last_v[dones_mask] = 0.0
+                q_ref_v = rewards_v.unsequeeze(dim=-1) + q_last_v * GAMMA
+
+                critic_loss_v = F.mse_loss(q_v, q_ref_v.detach())
+                critic_loss_v.backward()
+                crt_opt.step()
+
+                tb_tracker.track('loss_critic', critic_loss_v, frame_idx)
+                tb_tracker.track('critic_ref', q_ref_v, frame_idx)
+
+                # 训练actor
