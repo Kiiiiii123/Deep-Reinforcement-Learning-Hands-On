@@ -84,3 +84,7 @@ class DDPGCritic(nn.Module):
         obs = self.obs_net(x)
         return self.out_net(torch.cat([obs, a], dim=1))
 
+
+# 实现用于探索的OU的Agent
+class AgentDDPG(ptan.experience.BaseAgent):
+    def __init__(self, net, device='cpu', ou_enabled=True, ou_mu=0, ou_teta=0.15, ou_sigma=0.2, ou_epsilon=1.0):
