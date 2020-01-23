@@ -87,6 +87,7 @@ class DDPGCritic(nn.Module):
 
 # 实现用于探索的OU的Agent
 class AgentDDPG(ptan.experience.BaseAgent):
+    # 传入的参数大多是论文中OU相关的默认值
     def __init__(self, net, device='cpu', ou_enabled=True, ou_mu=0, ou_teta=0.15, ou_sigma=0.2, ou_epsilon=1.0):
         self.net = net
         self.device = device
@@ -95,4 +96,26 @@ class AgentDDPG(ptan.experience.BaseAgent):
         self.ou_teta = ou_teta
         self.ou_sigma = ou_sigma
         self.ou_epsilon = ou_epsilon
+
+    # 当新的episode开始时返回智能体的初始状态
+    def initial_state(self):
+        return None
+
+    def __call__(self, states, agent_states):
+        states_v = ptan.agent.float32_preprocessor(states).to(self.device)
+        mu_v = self.net(states_v)
+        actions = mu_v.data.cpu().numpy()
+        # 下面利用OU进程添加探索噪声
+        if self.ou_enabled and self.ou_epsilon > 0:
+            new_a_states = []
+            for a_state, action in zip(agent_states, actions):
+                if a_state is None:
+                    a_state = np.zeros(shape = action.shape, dtype=np.float32)
+                a_state += self.ou_teta * (self.ou_mu - a_state)
+                a_state += self.ou_sigma * np.random.normal(size=action.shape)
+
+
+
+
+
 
