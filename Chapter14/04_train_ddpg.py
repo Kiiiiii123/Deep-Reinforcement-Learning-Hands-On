@@ -74,4 +74,20 @@ if __name__ == '__main__':
 
     frame_idx = 0
     best_reward = None
-    with ptan.common.utils.RewardTracker()
+    with ptan.common.utils.RewardTracker(writer) as tracker:
+        with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
+            while True:
+                frame_idx += 1
+                buffer.populate(1)
+                rewards_steps = exp_source.pop_rewards_steps()
+                if rewards_steps:
+                    rewards, steps = zip(*rewards_steps)
+                    tb_tracker.track('episode_steps', steps[0], frame_idx)
+                    tracker.reward(rewards[0], frame_idx)
+
+                # 首先填充replay buffer
+                if len(buffer) < BATCH_SIZE:
+                    continue
+
+                batch = buffer.sample(BATCH_SIZE)
+                states_v, actions_v, rewards_v, dones_mask, last_states_v = common.unpack_batch_ddpg(batch, device=device)
