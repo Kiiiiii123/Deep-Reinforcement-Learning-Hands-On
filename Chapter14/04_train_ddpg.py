@@ -56,4 +56,22 @@ if __name__ == '__main__':
     env = gym.make(ENV_ID)
     test_env = gym.make(ENV_ID)
 
+    writer = SummaryWriter(comment='-ddpg_' + args.name)
 
+    act_net = model.DDPGActor(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
+    crt_net = model.DDPGCritic(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
+
+    tgt_act_net = ptan.agent.TargetNet(act_net)
+    tgt_crt_net = ptan.agent.TargetNet(crt_net)
+
+    agent = model.AgentDDPG(act_net, device=device)
+
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=1)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
+
+    act_opt = optim.Adam(act_net.parameters(), lr=LEARNING_RATE)
+    crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
+
+    frame_idx = 0
+    best_reward = None
+    with ptan.common.utils.RewardTracker()
