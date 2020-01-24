@@ -110,3 +110,10 @@ if __name__ == '__main__':
                 # 训练actor
                 act_opt.zero_grad()
                 cur_actions_v = act_net(states_v)
+                actor_loss_v = -crt_net(states_v, cur_actions_v).mean()
+                actor_loss_v.backward()
+                act_opt.step()
+                tb_tracker.track('loss_actor', actor_loss_v, frame_idx)
+
+
+
