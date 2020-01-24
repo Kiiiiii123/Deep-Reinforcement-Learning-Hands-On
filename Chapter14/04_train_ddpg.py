@@ -108,3 +108,5 @@ if __name__ == '__main__':
                 tb_tracker.track('critic_ref', q_ref_v, frame_idx)
 
                 # 训练actor
+                act_opt.zero_grad()
+                cur_actions_v = act_net(states_v)
