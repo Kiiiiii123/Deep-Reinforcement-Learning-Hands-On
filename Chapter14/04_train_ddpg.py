@@ -107,13 +107,18 @@ if __name__ == '__main__':
                 tb_tracker.track('loss_critic', critic_loss_v, frame_idx)
                 tb_tracker.track('critic_ref', q_ref_v, frame_idx)
 
-                # 训练actor
+                # 训练actor，提高critic网络的输出就是actor网络的任务
                 act_opt.zero_grad()
                 cur_actions_v = act_net(states_v)
                 actor_loss_v = -crt_net(states_v, cur_actions_v).mean()
                 actor_loss_v.backward()
                 act_opt.step()
                 tb_tracker.track('loss_actor', actor_loss_v, frame_idx)
+
+                # 延迟更新的目标网络
+                tgt_act_net.alpha_sync(alpha=1-e-3)
+                tgt_crt_net.alpha_sync(alpha=1-e-3)
+
 
 
 
