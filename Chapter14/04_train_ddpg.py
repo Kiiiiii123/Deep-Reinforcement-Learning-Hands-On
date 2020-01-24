@@ -119,6 +119,19 @@ if __name__ == '__main__':
                 tgt_act_net.alpha_sync(alpha=1-e-3)
                 tgt_crt_net.alpha_sync(alpha=1-e-3)
 
-
+                # 测试环节
+                if frame_idx % TEST_ITERS == 0:
+                    ts = time.time()
+                    rewards, steps = test_net(act_net, test_env, device=device)
+                    print('Test done in %.2f sec, reward %.3f, steps %d' % (time.time() - ts, rewards, steps))
+                    writer.add_scalar('test_reward', rewards, frame_idx)
+                    writer.add_scalar('test_steps', steps, frame_idx)
+                    if best_reward is None or best_reward < rewards:
+                        if best_reward is not None:
+                            print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
+                            name = "best_%+.3f_%d.dat" % (rewards, frame_idx)
+                            fname = os.path.join(save_path, name)
+                            torch.save(act_net.state_dict(), fname)
+                        best_reward = rewards
 
 
