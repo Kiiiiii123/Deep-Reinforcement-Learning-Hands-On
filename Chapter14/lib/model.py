@@ -160,7 +160,7 @@ class D4PGAgent(ptan.agent.BaseAgent):
         self.device = device
         self.epsilon = epsilon
 
-    # 根据观察到的状态和智能体自身的状态转换动作
+    # 根据观察到的状态和智能体自身的状态转换动作，对动作添加高斯噪声并以epsilon值进行缩放
     def __call__(self, states, agent_states):
         states_v = ptan.agent.float32_preprocessor(states).to(self.device)
         mu_v = self.net(states_v)
