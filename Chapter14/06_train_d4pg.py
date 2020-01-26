@@ -69,3 +69,12 @@ if __name__ == "__main__":
     tgt_act_net = ptan.agent.TargetNet(act_net)
     tgt_crt_net = ptan.agent.TargetNet(crt_net)
 
+    writer = SummaryWriter(comment='-d4pg_' + args.name)
+    agent = model.D4PGAgent(act_net, device=device)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
+    act_opt = optim.Adam(act_net.parameters(), lr=LEARNING_RATE)
+    crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
+
+    frame_idx = 0
+
