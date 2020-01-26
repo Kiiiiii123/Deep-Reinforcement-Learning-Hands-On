@@ -14,3 +14,37 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
+
+ENV_ID = 'MinitaurBulletEnv-v0'
+GAMMA = 0.99
+BATCH_SIZE = 64
+LEARNING_RATE = 1e-4
+REPLAY_SIZE = 100000
+REPLAY_INITIAL = 10000
+REWARD_STEPS = 5
+
+TEST_ITERS = 1000
+
+Vmax = 10
+Vmin = -10
+N_ATOMS = 51
+DELTA_Z = (Vmax - Vmin) / (N_ATOMS - 1)
+
+
+def test_net(net, env, count=10, device="cpu"):
+    rewards = 0.0
+    steps = 0
+    for _ in range(count):
+        obs = env.reset()
+        while True:
+            obs_v = ptan.agent.float32_preprocessor([obs]).to(device)
+            mu_v = net(obs_v)
+            action = mu_v.squeeze(dim=0).data.cpu().numpy()
+            action = np.clip(action, -1, 1)
+            obs, reward, done, _ = env.step(action)
+            rewards += reward
+            steps += 1
+            if done:
+                break
+    return rewards / count, steps / count
+
