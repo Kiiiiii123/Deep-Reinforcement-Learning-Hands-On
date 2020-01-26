@@ -103,6 +103,7 @@ if __name__ == "__main__":
                 crt_distr_v = crt_net(states_v, actions_v)
                 last_act_v = tgt_act_net.target_model(states_v)
                 last_distr_v = F.softmax(tgt_crt_net.target_model(last_states_v, last_act_v), dim=1)
-                proj_distr_v = distr_projection()
+                proj_distr_v = distr_projection(last_distr_v, rewards_v, dones_mask, gamma=GAMMA ** REWARD_STEPS, device=device)
+
 
 
