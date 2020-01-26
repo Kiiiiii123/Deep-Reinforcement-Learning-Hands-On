@@ -141,10 +141,26 @@ class D4PGCritic(nn.Module):
 
         delta = (v_max - v_min) / (n_atoms - 1)
         # 并不作为一种属性而是作为一种持续性的状态
-        self.register_buffer('supports', torch.arange(v_min, v_max+delta, delta))
+        self.register_buffer("supports", torch.arange(v_min, v_max+delta, delta))
 
     def forward(self, x, a):
+        obs = self.obs_net(x)
+        return self.out_net(torch.cat([obs, a], dim=1))
 
+    # 将奖励的概率分布转换为单个奖励均值
+    def distr_to_q(self, distr):
+        weights = F.softmax(distr, dim=1) * self.supports
+        res = weights.sum(dim=1)
+        return res.unsqueeze(dim=-1)
+
+
+class D4PGAgent(ptan.agent.BaseAgent):
+    def __init__(self, net, device='cpu', epsilon=0.3):
+        self.net = net
+        self.device = device
+        self. epsilon = epsilon
+
+    def __call__(self, sattes, agent_states):
 
 
 
