@@ -62,3 +62,10 @@ if __name__ == "__main__":
     env = gym.make(ENV_ID)
     test_env = gym.make(ENV_ID)
 
+    act_net = model.DDPGActor(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
+    crt_net = model.D4PGCritic(env.observation_space.shape[0], env.action_space.shape[0], N_ATOMS, Vmin, Vmax).to(device)
+    print(act_net)
+    print(crt_net)
+    tgt_act_net = ptan.agent.TargetNet(act_net)
+    tgt_crt_net = ptan.agent.TargetNet(crt_net)
+
