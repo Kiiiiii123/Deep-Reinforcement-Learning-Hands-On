@@ -123,6 +123,12 @@ class AgentDDPG(ptan.experience.BaseAgent):
         return actions, new_a_states
 
 
+# 与DDPG使用同样的Actor但是Critic并不相同
+class D4PGCritic(nn.Module):
+    def __init__(self, obs_size, act_size, n_atoms, v_min, v_max):
+        super(D4PGCritic,self).__init__()
+
+
 
 
 
