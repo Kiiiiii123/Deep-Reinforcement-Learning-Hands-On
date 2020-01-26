@@ -49,6 +49,9 @@ def test_net(net, env, count=10, device="cpu"):
     return rewards / count, steps / count
 
 
+def distr_projection(next_distr_v, rewards_v, dones_mask_t, gamma, device="cpu"):
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action='store_true', help='Enable CUDA')
@@ -94,4 +97,12 @@ if __name__ == "__main__":
 
                 batch = buffer.sample(BATCH_SIZE)
                 states_v, actions_v, rewards_v, dones_mask, last_states_v = common.unpack_batch_ddqn(batch, device)
+
+                # 训练critic
+                crt_opt.zero_grad()
+                crt_distr_v = crt_net(states_v, actions_v)
+                last_act_v = tgt_act_net.target_model(states_v)
+                last_distr_v = F.softmax(tgt_crt_net.target_model(last_states_v, last_act_v), dim=1)
+                proj_distr_v = distr_projection()
+
 
