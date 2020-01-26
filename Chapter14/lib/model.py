@@ -139,7 +139,12 @@ class D4PGCritic(nn.Module):
             nn.Linear(300, n_atoms)
         )
 
-        delta =
+        delta = (v_max - v_min) / (n_atoms - 1)
+        # 并不作为一种属性而是作为一种持续性的状态
+        self.register_buffer('supports', torch.arange(v_min, v_max+delta, delta))
+
+    def forward(self, x, a):
+
 
 
 
