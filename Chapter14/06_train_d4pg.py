@@ -77,4 +77,8 @@ if __name__ == "__main__":
     crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
 
     frame_idx = 0
+    best_reward = None
+    with ptan.common.utils.RewardTracker(writer) as tracker:
+        with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
+            while True:
 
