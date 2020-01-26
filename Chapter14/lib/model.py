@@ -128,7 +128,18 @@ class D4PGCritic(nn.Module):
     def __init__(self, obs_size, act_size, n_atoms, v_min, v_max):
         super(D4PGCritic,self).__init__()
 
+        self.obs_net = nn.Sequential(
+            nn.Linear(obs_size, 400),
+            nn.ReLU(),
+        )
 
+        self.out_net = nn.Sequential(
+            nn.Linear(400 + act_size, 300),
+            nn.ReLU(),
+            nn.Linear(300, n_atoms)
+        )
+
+        delta =
 
 
 
