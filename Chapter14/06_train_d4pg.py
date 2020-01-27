@@ -76,9 +76,21 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t, gamma, device="cpu")
         proj_distr[dones_mask] = 0.0
         tz_j = np.minimum(Vmax, np.maximum(Vmin, rewards[dones_mask]))
         b_j = (tz_j - Vmin) / DELTA_Z
+        l = np.floor(b_j).astype(np.int64)
+        u = np.ceil(b_j).astype(np.int64)
+        eq_mask = u == l
+        eq_dones = dones_mask.copy()
+        eq_dones[dones_mask] = eq_mask
+        if eq_dones.any():
+            proj_distr[eq_dones, l] = 1.0
+        ne_mask = u != l
+        ne_dones = dones_mask.copy()
+        ne_dones[dones_mask] = ne_mask
+        if ne_dones.any():
+            proj_distr[ne_dones, l] = (u - b_j)[ne_mask]
+            proj_distr[ne_dones, u] = (b_j - u)[ne_mask]
 
-
-
+    return torch.FloatTensor(proj_distr).to(device)
 
 
 if __name__ == "__main__":
