@@ -72,6 +72,11 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t, gamma, device="cpu")
         proj_distr[ne_mask, l[ne_mask]] += next_distr[ne_mask, atom] * (u - b_j)[ne_mask]
         proj_distr[ne_mask, u[ne_mask]] += next_distr[ne_mask, atom] * (b_j - l)[ne_mask]
 
+    if dones_mask.any():
+        proj_distr[dones_mask] = 0.0
+        tz_j = np.minimum(Vmax, np.maximum(Vmin, rewards[dones_mask]))
+        b_j = (tz_j - Vmin) / DELTA_Z
+
 
 
 
