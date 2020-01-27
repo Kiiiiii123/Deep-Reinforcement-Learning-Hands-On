@@ -145,6 +145,12 @@ if __name__ == "__main__":
                 last_act_v = tgt_act_net.target_model(states_v)
                 last_distr_v = F.softmax(tgt_crt_net.target_model(last_states_v, last_act_v), dim=1)
                 proj_distr_v = distr_projection(last_distr_v, rewards_v, dones_mask, gamma=GAMMA ** REWARD_STEPS, device=device)
+                prob_dist_v = -F.log_softmax(crt_distr_v, dim=1) * proj_distr_v
+                critic_loss_v = prob_dist_v.sum(dim=1).mean()
+                critic_loss_v.backward()
+                crt_opt.step()
+
+                # 训练actor
 
 
 
