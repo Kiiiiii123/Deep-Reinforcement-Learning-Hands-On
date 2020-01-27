@@ -151,6 +151,30 @@ if __name__ == "__main__":
                 crt_opt.step()
 
                 # 训练actor
+                act_opt.zero_grad()
+                cur_actions_v = act_net(states_v)
+                crt_distr_v = crt_net(states_v, cur_actions_v)
+                actor_loss_v = -crt_net.distr_to_q(crt_distr_v)
+                actor_loss_v = actor_loss_v.mean()
+                actor_loss_v.backward()
+                act_opt.step()
+                tb_tracker.track('loss_actor', actor_loss_v, frame_idx)
 
+                tgt_act_net.alpha_sync(alpha=1 - 1e-3)
+                tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
 
+                # 测试环节
+                if frame_idx % TEST_ITERS == 0:
+                    ts = time.time()
+                    rewards, steps = test_net(act_net, test_env, device=device)
+                    print("Test done in %.2f sec, reward %.3f, steps %d" % (time.time() - ts, rewards, steps))
+                    writer.add_scalar("test_reward", rewards, frame_idx)
+                    writer.add_scalar("test_steps", steps, frame_idx)
+                    if best_reward is None or best_reward < rewards:
+                        if best_reward is not None:
+                            print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
+                            name = "best_%+.3f_%d.dat" % (rewards, frame_idx)
+                            fname = os.path.join(save_path, name)
+                            torch.save(act_net.state_dict(), fname)
+                        best_reward = rewards
 
