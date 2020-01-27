@@ -64,8 +64,14 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t, gamma, device="cpu")
         b_j = (tz_j - Vmin) / DELTA_Z
         l = np.floor(b_j).astype(np.int64)
         u = np.ceil(b_j).astype(np.int64)
+        # 当投影值就在atom之上时的特殊情况
         eq_mask = u == l
         proj_distr[eq_mask, l[eq_mask]] += next_distr[eq_mask, atom]
+        # 当投影值落在两个atom之间的情况
+        ne_mask = u != l
+        proj_distr[ne_mask, l[ne_mask]] += next_distr[ne_mask, atom] * (u - b_j)[ne_mask]
+        proj_distr[ne_mask, u[ne_mask]] += next_distr[ne_mask, atom] * (b_j - l)[ne_mask]
+
 
 
 
