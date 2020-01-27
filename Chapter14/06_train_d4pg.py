@@ -64,7 +64,8 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t, gamma, device="cpu")
         b_j = (tz_j - Vmin) / DELTA_Z
         l = np.floor(b_j).astype(np.int64)
         u = np.ceil(b_j).astype(np.int64)
-
+        eq_mask = u == l
+        proj_distr[eq_mask, l[eq_mask]] += next_distr[eq_mask, atom]
 
 
 
