@@ -51,12 +51,19 @@ def test_net(net, env, count=10, device="cpu"):
 
 # 使用贝尔
 def distr_projection(next_distr_v, rewards_v, dones_mask_t, gamma, device="cpu"):
+    # 先将张量转换为numpy数组
     next_distr = next_distr_v.data.cpu().numpy()
     rewards = rewards_v.data.cpu().numpy()
     dones_mask = dones_mask_t.cpu().numpy().astype(np.bool)
     batch_size = len(rewards)
     # 用于存放投影分布的空数组
-    proj_distr = np.zero((batch_size, N_ATOMS), dtype=np.float32)
+    proj_distr = np.zeros((batch_size, N_ATOMS), dtype=np.float32)
+
+    for atom in range(N_ATOMS):
+        tz_j = np.minimum(Vmax, np.maximum(Vmin, rewards + (Vmin + atom * DELTA_Z) * gamma))
+        b_j = (tz_j - Vmin) / DELTA_Z
+        l = np.floor(b_j).astype(np.int64)
+        u = np.ceil(b_j).astype(np.int64)
 
 
 
