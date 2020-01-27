@@ -54,6 +54,11 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t, gamma, device="cpu")
     next_distr = next_distr_v.data.cpu().numpy()
     rewards = rewards_v.data.cpu().numpy()
     dones_mask = dones_mask_t.cpu().numpy().astype(np.bool)
+    batch_size = len(rewards)
+    # 用于存放投影分布的空数组
+    proj_distr = np.zero((batch_size, N_ATOMS), dtype=np.float32)
+
+
 
 
 
