@@ -150,7 +150,7 @@ if __name__ == "__main__":
                 critic_loss_v.backward()
                 crt_opt.step()
 
-                # 训练actor
+                # 训练actor，目标是使得critic网络的输出（奖励期望）最大化
                 act_opt.zero_grad()
                 cur_actions_v = act_net(states_v)
                 crt_distr_v = crt_net(states_v, cur_actions_v)
@@ -160,6 +160,7 @@ if __name__ == "__main__":
                 act_opt.step()
                 tb_tracker.track('loss_actor', actor_loss_v, frame_idx)
 
+                # 与目标网络进行平滑同步
                 tgt_act_net.alpha_sync(alpha=1 - 1e-3)
                 tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
 
