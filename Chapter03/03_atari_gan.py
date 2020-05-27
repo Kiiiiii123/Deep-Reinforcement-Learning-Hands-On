@@ -127,8 +127,31 @@ def iterate_batches(envs, batch_size=BATCH_SIZE):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cuda', default=False, action='store_true', help='Enable cuda computation')
+    args = parser.parse_args()
 
+    device = torch.device('cuda' if args.cuda else 'cpu')
+    envs = [InputWrapper(gym.make(name)) for name in ('Breakout-v0', 'AirRaid-v0', 'Pong-v0')]
 
+    input_shape = envs[0].observation_space.shape
+
+    net_discr = Discriminator(input_shape=input_shape).to(device)
+    net_gener = Generator(output_shape=input_shape).to(device)
+
+    objective = nn.BCELoss()
+
+    dis_optimizer = optim.Adam(params=net_discr.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
+    gen_optimizer = optim.Adam(params=net_gener.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
+
+    writer = SummaryWriter()
+
+    dis_loss = []
+    gen_loss = []
+    iter_num = 0
+
+    true_labels_v = torch.ones(BATCH_SIZE, device=device)
+    fake_labels_v = torch.zeros(BATCH_SIZE, device=device)
 
 
 
