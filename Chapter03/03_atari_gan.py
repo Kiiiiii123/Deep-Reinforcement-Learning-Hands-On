@@ -59,16 +59,16 @@ class Discriminator(nn.Module):
         self. conv_pipe = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=DISCR_FILTERS, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
-            nn.Conv2d(in_channels=DISCR_FILTERS, out_channels=DISCR_FILTERS*2, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(DISCR_FILTERS*2),
+            nn.Conv2d(in_channels=DISCR_FILTERS, out_channels=DISCR_FILTERS * 2, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(DISCR_FILTERS * 2),
             nn.ReLU(),
-            nn.Conv2d(in_channels=DISCR_FILTERS*2, out_channels=DISCR_FILTERS*4, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(DISCR_FILTERS*4),
+            nn.Conv2d(in_channels=DISCR_FILTERS*2, out_channels=DISCR_FILTERS * 4, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(DISCR_FILTERS * 4),
             nn.ReLU(),
-            nn.Conv2d(in_channels=DISCR_FILTERS*4, out_channels=DISCR_FILTERS*8, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(DISCR_FILTERS*8),
+            nn.Conv2d(in_channels=DISCR_FILTERS*4, out_channels=DISCR_FILTERS * 8, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(DISCR_FILTERS * 8),
             nn.ReLU(),
-            nn.Conv2d(in_channels=DISCR_FILTERS*8, out_channels=1, kernel_size=4, stride=2, padding=1),
+            nn.Conv2d(in_channels=DISCR_FILTERS * 8, out_channels=1, kernel_size=4, stride=2, padding=1),
             nn.Sigmoid()
         )
 
@@ -82,8 +82,30 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         # this pipe deconvolves input vector into (3, 64, 64) image
         self.deconv_pipe = nn.Sequential(
-            nn.Decon
+            nn.ConvTranspose2d(in_channels=LATENT_VECTOR_SIZE, out_channels=GENER_FILTERS * 8, kernel_size=4, stride=2,
+                               padding=1),
+            nn.BatchNorm2d(GENER_FILTERS * 8),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=GENER_FILTERS * 8, out_channels=GENER_FILTERS * 4, kernel_size=4, stride=2,
+                               padding=1),
+            nn.BatchNorm2d(GENER_FILTERS * 4),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=GENER_FILTERS * 4, out_channels=GENER_FILTERS * 2, kernel_size=4, stride=2,
+                               padding=1),
+            nn.BatchNorm2d(GENER_FILTERS * 2),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=GENER_FILTERS * 2, out_channels=GENER_FILTERS, kernel_size=4, stride=2,
+                               padding=1),
+            nn.BatchNorm2d(GENER_FILTERS),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=GENER_FILTERS, out_channels=output_shape[0], kernel_size=4, stride=2,
+                               padding=1),
+            nn.Tanh()
         )
+
+    def forward(self, x):
+        return self.deconv_pipe(x)
+
 
 
 
