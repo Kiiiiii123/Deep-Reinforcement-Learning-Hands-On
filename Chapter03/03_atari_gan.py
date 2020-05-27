@@ -146,8 +146,8 @@ if __name__ == '__main__':
 
     writer = SummaryWriter()
 
-    dis_loss = []
-    gen_loss = []
+    dis_losses = []
+    gen_losses = []
     iter_num = 0
 
     true_labels_v = torch.ones(BATCH_SIZE, device=device)
