@@ -52,8 +52,38 @@ class InputWrapper(gym.ObservationWrapper):
         return new_obs.astype(np.float32)
 
 
+class Discriminator(nn.Module):
+    def __init__(self, input_shape):
+        super(Discriminator, self).__init__()
+        # this pipe converges image into the single number
+        self. conv_pipe = nn.Sequential(
+            nn.Conv2d(in_channels=input_shape[0], out_channels=DISCR_FILTERS, kernel_size=4, stride=2, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=DISCR_FILTERS, out_channels=DISCR_FILTERS*2, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(DISCR_FILTERS*2),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=DISCR_FILTERS*2, out_channels=DISCR_FILTERS*4, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(DISCR_FILTERS*4),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=DISCR_FILTERS*4, out_channels=DISCR_FILTERS*8, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(DISCR_FILTERS*8),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=DISCR_FILTERS*8, out_channels=1, kernel_size=4, stride=2, padding=1),
+            nn.Sigmoid()
+        )
+
+    def forward(self,x):
+        conv_out = self.conv_pipe(x)
+        return conv_out.view(-1, 1).squeeze(dim=1)
 
 
+class Generator(nn.Module):
+    def __init__(self, output_shape):
+        super(Generator, self).__init__()
+        # this pipe deconvolves input vector into (3, 64, 64) image
+        self.deconv_pipe = nn.Sequential(
+            nn.Decon
+        )
 
 
 
