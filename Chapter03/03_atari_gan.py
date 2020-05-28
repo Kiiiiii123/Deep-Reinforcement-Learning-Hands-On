@@ -170,6 +170,15 @@ if __name__ == '__main__':
         dis_losses.append(dis_loss.item())
 
         # train generator
+        net_gener.zero_grad()
+        dis_output_v = net_discr(gen_output_v)
+        gen_loss = objective(dis_output_v, true_labels_v)
+        gen_loss.backward()
+        gen_optimizer.step()
+        gen_losses.append(gen_loss.item())
+
+        iter_num += 1
+        if iter_num % REPORT_EVERY_ITER == 0:
 
 
 
