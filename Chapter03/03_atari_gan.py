@@ -179,6 +179,15 @@ if __name__ == '__main__':
 
         iter_num += 1
         if iter_num % REPORT_EVERY_ITER == 0:
+            log.info('Iter %d: gen_loss=%.3e, dis_loss=%.3e', iter_num, np.mean(gen_losses), np.mean(dis_losses))
+            writer.add_scalar('gen_loss', np.mean(gen_losses), iter_num)
+            writer.add_scalar('dis_loss', np.mean(dis_losses), iter_num)
+            gen_losses = []
+            dis_losses = []
+
+        if iter_num % SAVE_IMAGE_EVERY_ITER == 0:
+            writer.add_image('fake', vutils.make_grid(gen_output_v.data[:64], normalize=True), iter_num)
+            writer.add_image('real', vutils.make_grid(batch_v.data[:64], normalize=True), iter_num)
 
 
 
