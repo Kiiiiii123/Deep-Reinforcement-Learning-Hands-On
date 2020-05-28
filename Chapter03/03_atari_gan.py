@@ -22,6 +22,7 @@ DISCR_FILTERS = 64
 GENER_FILTERS = 64
 BATCH_SIZE = 16
 
+# dimension input image will be rescaled
 IMAGE_SIZE = 64
 
 LEARNING_RATE = 0.0001
@@ -118,8 +119,7 @@ def iterate_batches(envs, batch_size=BATCH_SIZE):
             batch.append(obs)
         if len(batch) == batch_size:
             # Normalizing input between -1 to 1
-            batch_np = np.array(batch, dtype=np.float32)
-            batch_np *= 2.0/255.0 - 1.0
+            batch_np = np.array(batch, dtype=np.float32) * 2.0 / 255.0 - 1.0
             yield torch.tensor(batch_np)
             batch.clear()
         if is_done:
@@ -133,7 +133,6 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if args.cuda else 'cpu')
     envs = [InputWrapper(gym.make(name)) for name in ('Breakout-v0', 'AirRaid-v0', 'Pong-v0')]
-
     input_shape = envs[0].observation_space.shape
 
     net_discr = Discriminator(input_shape=input_shape).to(device)
