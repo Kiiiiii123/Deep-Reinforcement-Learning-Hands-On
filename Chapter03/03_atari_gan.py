@@ -153,6 +153,26 @@ if __name__ == '__main__':
     true_labels_v = torch.ones(BATCH_SIZE, device=device)
     fake_labels_v = torch.zeros(BATCH_SIZE, device=device)
 
+    for batch_v in iterate_batches(envs):
+        # fake samples, input is 4D: batch, filters, x, y
+        gen_input_v = torch.FloatTensor(BATCH_SIZE, LATENT_VECTOR_SIZE, 1, 1)
+        gen_input_v.normal_(0, 1).to(device)
+        gen_output_v = net_gener(gen_input_v)
+        batch_v = batch_v.to(device)
+
+        # train discriminator
+        net_discr.zero_grad()
+        dis_output_true_v = net_discr(batch_v)
+        dis_output_fake_v = net_discr(gen_output_v.detach())
+        dis_loss = objective(dis_output_true_v, true_labels_v) + objective(dis_output_fake_v, fake_labels_v)
+        dis_loss.backward()
+        dis_optimizer.step()
+        dis_losses.append(dis_loss.item())
+
+        # train generator
+
+
+
 
 
 
