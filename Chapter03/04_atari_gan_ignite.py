@@ -148,6 +148,12 @@ if __name__ == '__main__':
     true_labels_v = torch.ones(BATCH_SIZE, device=device)
     fake_labels_v = torch.zeros(BATCH_SIZE, device=device)
 
+    def process_batch(trainer, batch):
+        gen_input_v = torch.FloatTensor(BATCH_SIZE, LATENT_VECTOR_SIZE, 1, 1)
+        gen_input_v = gen_input_v.normal_(0, 1).to(device)
+        gen_output_v = net_gener(gen_input_v)
+        batch_v = batch.to(device)
+
 
 
 
