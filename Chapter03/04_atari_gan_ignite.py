@@ -169,8 +169,18 @@ if __name__ == '__main__':
         gen_loss.backward()
         gen_optimizer.step()
 
+        if trainer.state.iteration % SAVE_IMAGE_EVERY_ITER == 0:
+            fake_img = vutils.make_grid(gen_output_v.data[:64], normalize=True)
+            trainer.tb.writer.add_image('fake', fake_img, trainer.state.iteration)
+            real_img = vutils.make_grid(batch_v.data[:64], normalize=True)
+            trainer.tb.qriter.add_image('real', real_img, trainer.state.iteration)
+            trainer.tb.writer.flush()
 
-        
+        # this function can return any data to be tracked during the training process
+        return dis_loss.item(), gen_loss.item()
+
+    # create an Engine instance, attach the required handlers, and the training process
+
 
 
 
