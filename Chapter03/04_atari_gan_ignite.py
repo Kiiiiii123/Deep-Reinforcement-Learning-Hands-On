@@ -189,7 +189,15 @@ if __name__ == '__main__':
     handler = tb_logger.OutputHandler(tag='train', metric_names=['avg_loss_gen', 'avg_loss_dis'])
     tb.attach(engine, log_handler=handler, event_name=Events.ITERATION_COMPLETED)
 
+    @engine.on(Events.ITERATION_COMPLETED)
+    def log_losses(trainer):
+        if trainer.state.iteration % REPORT_EVERY_ITER == 0:
+            log.info('%d: gen_loss=%f, dis_loss=%f',
+                     trainer.state.iteration,
+                     trainer.state.metrics['avg_loss_gen'],
+                     trainer.state.metrics['avg_loss_dis'])
 
+    engine.run(data=iterate_batches(envs))
 
 
 
