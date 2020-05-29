@@ -180,6 +180,16 @@ if __name__ == '__main__':
         return dis_loss.item(), gen_loss.item()
 
     # create an Engine instance, attach the required handlers, and the training process
+    engine = Engine(process_batch)
+    tb = tb_logger.TensorboardLogger(log_dir=None)
+    engine.tb = tb
+    RunningAverage(output_transform=lambda output: output[1]).attach(engine, 'avg_loss_gen')
+    RunningAverage(output_transform=lambda output: output[0]).attach(engine, 'avg_loss_dis')
+
+    handler = tb_logger.OutputHandler(tag='train', metric_names=['avg_loss_gen', 'avg_loss_dis'])
+    tb.attach(engine, log_handler=handler, event_name=Events.ITERATION_COMPLETED)
+
+
 
 
 
