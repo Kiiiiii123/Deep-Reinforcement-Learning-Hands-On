@@ -67,6 +67,7 @@ def filter_batch(batch, percentile):
     for reward, steps in batch:
         if reward < reward_bound:
             continue
+        # extend is quite different from append
         train_obs.extend(map(lambda step: step.observation, steps))
         train_act.extend(map(lambda step: step.action, steps))
 
