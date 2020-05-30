@@ -85,7 +85,7 @@ if __name__ == '__main__':
     optimizer = optim.Adam(net.parameters(), lr=0.01)
     writer = SummaryWriter(comment='-cartpole')
 
-    for iter_num, batch in iterate_batches(env, net, BATCH_SIZE):
+    for iter_num, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
         obs_v, act_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
         optimizer.zero_grad()
         act_score_v = net(obs_v)
