@@ -57,4 +57,24 @@ def iterate_batches(env, net, batch_size):
             obs = next_obs
 
 
-def
+def filter_batch(batch, percentile):
+    rewards = list(map(lambda episode: episode.reward, batch))
+    reward_bound = np.percentile(rewards, percentile)
+    reward_mean = float(np.mean(rewards))
+
+    train_obs = []
+    train_act = []
+    for reward, steps in batch:
+        if reward < reward_bound:
+            continue
+        train_obs.append(map(lambda step: step.observation, steps))
+        train_act.append(map(lambda step: step.action, steps))
+
+    train_obs_v = torch.FloatTensor(train_obs)
+    train_act_v = torch.LongTensor(train_act)
+    return train_obs_v, train_act_v, reward_bound, reward_mean
+
+
+if __name__ == '__main__':
+
+
