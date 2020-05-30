@@ -54,7 +54,7 @@ def iterate_batches(env, net, batch_size):
             if len(batch) == batch_size:
                 yield batch
                 batch = []
-            obs = next_obs
+        obs = next_obs
 
 
 def filter_batch(batch, percentile):
@@ -67,8 +67,8 @@ def filter_batch(batch, percentile):
     for reward, steps in batch:
         if reward < reward_bound:
             continue
-        train_obs.append(map(lambda step: step.observation, steps))
-        train_act.append(map(lambda step: step.action, steps))
+        train_obs.extend(map(lambda step: step.observation, steps))
+        train_act.extend(map(lambda step: step.action, steps))
 
     train_obs_v = torch.FloatTensor(train_obs)
     train_act_v = torch.LongTensor(train_act)
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         loss_v = objective(act_score_v, act_v)
         loss_v.backward()
         optimizer.step()
-        print('%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f', iter_num, loss_v.item(), reward_m, reward_b)
+        print('%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f' % (iter_num, loss_v.item(), reward_m, reward_b))
         writer.add_scalar('loss', loss_v.item(), iter_num)
         writer.add_scalar('reward_mean', reward_m, iter_num)
         writer.add_scalar('reward_bound', reward_b, iter_num)
