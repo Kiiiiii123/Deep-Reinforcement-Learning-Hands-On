@@ -43,7 +43,7 @@ class InputWrapper(gym.ObservationWrapper):
         self.observation_space = gym.spaces.Box(
             self.observation(old_space.low),
             self.observation(old_space.high),
-            dtype = np.float32
+            dtype=np.float32
         )
 
     def observation(self, observation):
