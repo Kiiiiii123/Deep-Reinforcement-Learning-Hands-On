@@ -47,4 +47,14 @@ def iterate_batches(env, net, batch_size):
         episode_steps.append(episode_step)
         if is_done:
             episode = Episode(reward=episode_reward, steps=episode_steps)
+            batch.append(episode)
+            episode_reward = 0.0
+            episode_steps = []
+            next_obs = env.reset()
+            if len(batch) == batch_size:
+                yield batch
+                batch = []
+            obs = next_obs
 
+
+def
