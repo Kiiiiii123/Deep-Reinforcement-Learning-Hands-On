@@ -30,4 +30,21 @@ Episode = namedtuple('Episode', field_names=['reward', 'steps'])
 EpisodeStep = namedtuple('EpisodeStep', field_names=['observation', 'action'])
 
 
-def
+def iterate_batches(env, net, batch_size):
+    batch = []
+    episode_reward = 0.0
+    episode_steps = []
+    obs = env.reset()
+    sm = nn.Softmax(dim=1)
+    while True:
+        obs_v = torch.FloatTensor([obs])
+        act_probs_v = sm(net(obs_v))
+        act_probs = act_probs_v.data.numpy()[0]
+        action = np.random.choice(len(act_probs), p=act_probs)
+        next_obs, reward, is_done, _ = env.step(action)
+        episode_reward += reward
+        episode_step = EpisodeStep(observation=obs, action=action)
+        episode_steps.append(episode_step)
+        if is_done:
+            episode = Episode(reward=episode_reward, steps=episode_steps)
+
