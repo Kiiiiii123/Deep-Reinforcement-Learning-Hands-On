@@ -97,7 +97,7 @@ if __name__ == '__main__':
     net = Net(obs_size, HIDDEN_SIZE, n_actions)
     objective = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=0.01)
-    writer = SummaryWriter(comment='-cartpole')
+    writer = SummaryWriter(comment='-frozenlake-naive')
 
     for iter_num, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
         obs_v, act_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
