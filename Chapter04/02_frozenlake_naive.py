@@ -7,18 +7,18 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+
 HIDDEN_SIZE = 128
 BATCH_SIZE = 16
 PERCENTILE = 70
 
 
-# 将数值输入更换为独热编码
-class DiscreteONeHotWrapper(gym.ObservationWrapper):
+class DiscreteOneHotWrapper(gym.ObservationWrapper):
     def __init__(self, env):
-        super(DiscreteONeHotWrapper, self).__init__(env)
-        # 断言，判断表达式为假是触发异常，插入调试断点到程序的一种便捷方式
+        super(DiscreteOneHotWrapper, self).__init__(env)
         assert isinstance(env.observation_space, gym.spaces.Discrete)
-        self.observation_space = gym.spaces.Box(0.0, 1.0, (env.observation_space.n,), dtype=np.float32)
+        shape = (env.observation_space.n, )
+        self.observation_space = gym.spaces.Box(0.0, 1.0, shape, dtype=np.float32)
 
     def observation(self, observation):
         res = np.copy(self.observation_space.low)
@@ -56,9 +56,11 @@ def iterate_batches(env, net, batch_size):
         action = np.random.choice(len(act_probs), p=act_probs)
         next_obs, reward, is_done, _ = env.step(action)
         episode_reward += reward
-        episode_steps.append(EpisodeStep(observation=obs, action=action))
+        episode_step = EpisodeStep(observation=obs, action=action)
+        episode_steps.append(episode_step)
         if is_done:
-            batch.append(Episode(reward=episode_reward, steps=episode_steps))
+            episode = Episode(reward=episode_reward, steps=episode_steps)
+            batch.append(episode)
             episode_reward = 0.0
             episode_steps = []
             next_obs = env.reset()
@@ -69,47 +71,50 @@ def iterate_batches(env, net, batch_size):
 
 
 def filter_batch(batch, percentile):
-    rewards = list(map(lambda s: s.reward, batch))
+    rewards = list(map(lambda episode: episode.reward, batch))
     reward_bound = np.percentile(rewards, percentile)
     reward_mean = float(np.mean(rewards))
 
     train_obs = []
     train_act = []
-    for example in batch:
-        if example.reward < reward_bound:
+    for reward, steps in batch:
+        if reward < reward_bound:
             continue
-        train_obs.extend(map(lambda step: step.observation, example.steps))
-        train_act.extend(map(lambda step: step.action, example.steps))
+        # extend is quite different from append
+        train_obs.extend(map(lambda step: step.observation, steps))
+        train_act.extend(map(lambda step: step.action, steps))
 
     train_obs_v = torch.FloatTensor(train_obs)
     train_act_v = torch.LongTensor(train_act)
     return train_obs_v, train_act_v, reward_bound, reward_mean
 
 
-if __name__ == "__main__":
-    env = DiscreteONeHotWrapper(gym.make("FrozenLake-v0"))
-    # env = gym.wrappers.Monitor(env, directory="mon", force=True)
+if __name__ == '__main__':
+    env = DiscreteOneHotWrapper(gym.make('FrozenLake-v0'))
     obs_size = env.observation_space.shape[0]
     n_actions = env.action_space.n
 
     net = Net(obs_size, HIDDEN_SIZE, n_actions)
     objective = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(params=net.parameters(), lr=0.01)
-    writer = SummaryWriter(comment="-frozenlake-naive")
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
+    writer = SummaryWriter(comment='-cartpole')
 
-    for iter_no, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
-        obs_v, acts_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
+    for iter_num, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
+        obs_v, act_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
         optimizer.zero_grad()
-        action_scores_v = net(obs_v)
-        loss_v = objective(action_scores_v, acts_v)
+        act_score_v = net(obs_v)
+        loss_v = objective(act_score_v, act_v)
         loss_v.backward()
         optimizer.step()
-        print("%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f" % (
-            iter_no, loss_v.item(), reward_m, reward_b))
-        writer.add_scalar("loss", loss_v.item(), iter_no)
-        writer.add_scalar("reward_bound", reward_b, iter_no)
-        writer.add_scalar("reward_mean", reward_m, iter_no)
+        print('%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f' % (iter_num, loss_v.item(), reward_m, reward_b))
+        writer.add_scalar('loss', loss_v.item(), iter_num)
+        writer.add_scalar('reward_mean', reward_m, iter_num)
+        writer.add_scalar('reward_bound', reward_b, iter_num)
         if reward_m > 199:
-            print("Solved!")
+            print('Solved!')
             break
     writer.close()
+
+
+
+
