@@ -76,5 +76,31 @@ def filter_batch(batch, percentile):
 
 
 if __name__ == '__main__':
+    env = gym.make('CartPole-v0')
+    obs_size = env.observation_space.shape[0]
+    n_actions = env.action_space.n
+
+    net = Net(obs_size, HIDDEN_SIZE, n_actions)
+    objective = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
+    writer = SummaryWriter(comment='-cartpole')
+
+    for iter_num, batch in iterate_batches(env, net, BATCH_SIZE):
+        obs_v, act_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
+        optimizer.zero_grad()
+        act_score_v = net(obs_v)
+        loss_v = objective(act_score_v, act_v)
+        loss_v.backward()
+        optimizer.step()
+        print('%d: loss=%.3f, reward_mean=%.1f, reward_bound=%.1f', iter_num, loss_v.item(), reward_m, reward_b)
+        writer.add_scalar('loss', loss_v.item(), iter_num)
+        writer.add_scalar('reward_mean', reward_m, iter_num)
+        writer.add_scalar('reward_bound', reward_b, iter_num)
+        if reward_m > 199:
+            print('Solved!')
+            break
+    writer.close()
+
+
 
 
