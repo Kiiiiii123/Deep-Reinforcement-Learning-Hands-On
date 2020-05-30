@@ -24,7 +24,7 @@ class Environment:
     def action(self, action: int) -> float:
         if self.is_done():
             raise Exception('Game is over!')
-        self.steps_left -=1
+        self.steps_left -= 1
         return random.random()
 
 
