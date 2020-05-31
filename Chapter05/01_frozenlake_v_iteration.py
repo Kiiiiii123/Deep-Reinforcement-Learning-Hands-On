@@ -59,7 +59,7 @@ class Agent:
     def value_iteration(self):
         for state in range(self.env.observation_space.n):
             state_values = [self.calc_action_value(state, action) for action in range(self.env.action_space.n)]
-            self.values [state] = max(state_values)
+            self.values[state] = max(state_values)
 
 
 if __name__ == '__main__':
