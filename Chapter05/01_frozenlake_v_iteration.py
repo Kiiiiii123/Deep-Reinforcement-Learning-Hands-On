@@ -33,7 +33,15 @@ class Agent:
             action_value += (count / total) * val
         return action_value
 
-    def
+    def select_action(self, state):
+        best_action, best_value = None, None
+        for action in range(self.env.action_space.n):
+            action_value = self.calc_action_value(state, action)
+            if best_value is None or action_value > best_value:
+                best_value = action_value
+                best_action = action
+        return best_action
 
+    def play_episodes(self, count):
 
 
