@@ -23,8 +23,17 @@ class Agent:
             self.transitions[(self.state, action)][new_state] += 1
             self.state = self.env.reset() if is_done else new_state
 
-    def
+    def calc_action_value(self, state, action):
+        target_counts = self.transitions[(state, action)]
+        total = sum(target_counts.values())
+        action_value = 0.0
+        for target_state, count in target_counts.items():
+            reward = self.rewards[(state, action, target_state)]
+            val = reward + GAMMA * self.values[target_state]
+            action_value += (count / total) * val
+        return action_value
 
+    def
 
 
 
