@@ -21,5 +21,9 @@ class Agent:
         self.state = self.env.reset() if is_done else new_state
         return old_state, action, reward, new_state
 
-    def
+    def best_value_and_action(self, state):
+        best_value, best_action = None, None
+        for action in range(self.env.action_space.n):
+
+
 
