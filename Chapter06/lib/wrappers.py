@@ -5,25 +5,25 @@ import numpy as np
 import collections
 
 
-class FireResetEnv(gym.Wrapper)
+class FireResetEnv(gym.Wrapper):
     def __init__(self, env=None):
         """For environments where the user needs to press FIRE button for the game to start."""
         super(FireResetEnv, self).__init__(env)
         assert env.unwrapped.get_action_meanings()[1] == 'FIRE'
         assert len(env.unwrapped.get_action_meanings()) >= 3
 
-        def step(self, action):
-            return self.env.step(action)
+    def step(self, action):
+        return self.env.step(action)
 
-        def reset(self):
+    def reset(self):
+        self.env.reset()
+        obs, _, done, _ = self.env.step(1)
+        if done:
             self.env.reset()
-            obs, _, done, _ = self.env.step(1)
-            if done:
-                self.env.reset()
-            obs, _, done, _ = self.env.step(2)
-            if done:
-                self.env.reset()
-            return obs
+        obs, _, done, _ = self.env.step(2)
+        if done:
+            self.env.reset()
+        return obs
 
 
 class MaxAndSkipEnv(gym.Wrapper):
@@ -74,4 +74,25 @@ class ProcessFrame84(gym.ObservationWrapper):
         x_t = resized_screen[18:102, :]
         x_t = np.reshape(x_t, [84, 84, 1])
         return x_t.astype(np.uint8)
+
+
+class BufferWrapper(gym.ObservationWrapper):
+    def __init__(self, env, n_steps, dtype=np.float32):
+        """Create a stack of subsequent frames along the first dimension and return them as an observation."""
+        super(BufferWrapper, self).__init__(env)
+        self.dtype = dtype
+        old_space = self.observation_space
+        self.observation_space = gym.spaces.Box(
+            old_space.low.repeat(n_steps, axis=0),
+            old_space.high.repeat(n_steps, axis=0), dtype=dtype)
+
+    def reset(self):
+        self.buffer = np.zeros_like(self.observation_space.low, dtype=self.dtype)
+        return self.observation(self.env.reset())
+
+    def observation(self, observation):
+        self.buffer[:-1] = self.buffer[1:]
+        self.buffer[-1] = observation
+        return self.buffer
+
 
