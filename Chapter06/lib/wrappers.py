@@ -96,3 +96,28 @@ class BufferWrapper(gym.ObservationWrapper):
         return self.buffer
 
 
+class ImageToPytorch(gym.ObservationWrapper):
+    def __init__(self, env):
+        """Change the shape of observation from HWC to the CHW format required by Pytorch."""
+        super(ImageToPytorch, self).__init__(env)
+        old_shape = self.observation_space.shape
+        new_shape = (old_shape[-1], old_shape[0], old_shape[1])
+        self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=new_shape, dtype=np.float32)
+
+    def observation(self, observation):
+        return np.moveaxis(observation, 2, 0)
+
+
+class ScaledFloatFrame(gym.ObservationWrapper):
+    def observation(self, observation):
+        return np.array(observation).astype(np.float32) / 255.0
+
+
+def make_env(env_name):
+    env = gym.make(env_name)
+    env = MaxAndSkipEnv(env)
+    env = FireResetEnv(env)
+    env = ProcessFrame84(env)
+    env = ImageToPytorch(env)
+    env = BufferWrapper(env, 4)
+    return ScaledFloatFrame(env)
