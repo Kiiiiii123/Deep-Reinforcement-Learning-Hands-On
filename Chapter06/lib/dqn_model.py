@@ -22,6 +22,7 @@ class DQN(nn.Module):
             nn.Linear(512, n_actions)
         )
 
+    # just like the 'Flatten' in Tensorflow
     def _get_conv_out_size(self, shape):
         fake_conv_out = self.conv(torch.zeros(1, *shape))
         return int(np.prod(fake_conv_out.size()))
