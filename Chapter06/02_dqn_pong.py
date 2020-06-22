@@ -1,5 +1,5 @@
-from Chapter06.lib import wrappers
-from Chapter06.lib import dqn_model
+from lib import wrappers
+from lib import dqn_model
 
 import argparse
 import time
@@ -13,7 +13,7 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 
 
-DEFAULT_ENV_NAME = 'PongNoFrameSkip-v4'
+DEFAULT_ENV_NAME = 'PongNoFrameskip-v4'
 MEAN_REWARD_BOUND = 19.0
 
 GAMMA = 0.99
@@ -43,7 +43,8 @@ class ExperienceBuffer:
     def sample(self, batch_size):
         indices = np.random.choice(len(self.buffer), batch_size, replace=False)
         states, actions, rewards, dones, new_states = zip(*[self.buffer[index] for index in indices])
-        return np.array(states), np.array(actions), np.array(rewards, np.float32), np.array(dones, np.uint8), np.array(new_states)
+        return np.array(states), np.array(actions), np.array(rewards, dtype=np.float32), \
+               np.array(dones, dtype=np.uint8), np.array(new_states)
 
 
 class Agent:
@@ -68,10 +69,10 @@ class Agent:
             _, act_v = torch.max(q_vals_v, dim=1)
             action = int(act_v.item())
 
-        new_state, reward, is_done = self.env.step(action)
+        new_state, reward, is_done, _ = self.env.step(action)
         self.total_reward += reward
 
-        exp = ExperienceBuffer(self.state, action, reward, is_done, new_state)
+        exp = Experience(self.state, action, reward, is_done, new_state)
         self.exp_buffer.append(exp)
         self.state = new_state
         if is_done:
@@ -94,12 +95,12 @@ def calc_loss(batch, net, tgt_net, device='cpu'):
     next_state_values = next_state_values.detach()
 
     expected_state_action_values = rewards_v + next_state_values * GAMMA
-    return nn.MSELoss(state_action_values, expected_state_action_values)
+    return nn.MSELoss()(state_action_values, expected_state_action_values)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cuda', default=False, action='store true', help='Enable cuda')
+    parser.add_argument('--cuda', default=False, action='store_true', help='Enable cuda')
     parser.add_argument('--env', default= DEFAULT_ENV_NAME, help='Name of the environment, default=' + DEFAULT_ENV_NAME)
     args = parser.parse_args()
     device = torch.device('cuda' if args.cuda else 'cpu')
@@ -122,6 +123,45 @@ if __name__ == '__main__':
     ts = time.time()
     best_mean_reward = None
 
+    while True:
+        frame_idx += 1
+        epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
 
+        reward = agent.play_step(net, epsilon, device=device)
+        if reward is not None:
+            total_rewards.append(reward)
+            speed = (frame_idx - ts_frame) / (time.time() - ts)
+            ts_frame = frame_idx
+            ts = time.time()
+            mean_reward = np.mean(total_rewards[-100:])
+            print('%d: done %d games, reward %.3f, eps %.2f, speed %.2f f/s' % (frame_idx, len(total_rewards),
+                                                                                    mean_reward, epsilon, speed))
+            writer.add_scalar('epsilon', epsilon, frame_idx)
+            writer.add_scalar('speed', speed, frame_idx)
+            writer.add_scalar('reward_100', mean_reward, frame_idx)
+            writer.add_scalar('reward', reward, frame_idx)
+
+            if best_mean_reward is None or best_mean_reward < mean_reward:
+                torch.save(net.state_dict(), args.env + '-best_%.0f.bat' % mean_reward)
+                if best_mean_reward is not None:
+                    print('Best reward updated %.3f -> %.3f' % (best_mean_reward, mean_reward))
+                    best_mean_reward = mean_reward
+            if mean_reward > MEAN_REWARD_BOUND:
+                print('Solved in %d frames!' % frame_idx)
+                break
+
+        if len(replay_buffer) < REPLAY_START_SIZE:
+            continue
+
+        if frame_idx % SYNC_TARGET_FRAMES ==0:
+            tgt_net.load_state_dict(net.state_dict())
+
+        optimizer.zero_grad()
+        batch = replay_buffer.sample(BATCH_SIZE)
+        loss_t = calc_loss(batch, net, tgt_net, device=device)
+        loss_t.backward()
+        optimizer.step()
+
+    writer.close()
 
 
