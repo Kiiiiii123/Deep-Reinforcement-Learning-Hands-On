@@ -35,3 +35,24 @@ if __name__ == '__main__':
     total_reward = 0.0
     c = collections.Counter()
 
+    while True:
+        start_ts = time.time()
+        if args.vis:
+            env.render()
+        state_v = torch.tensor(np.array(state, copy=False))
+        q_vals = net(state_v).data.numpy()[0]
+        action = np.argmax(q_vals)
+        c[action] += 1
+        state, reward, done, _ = env.step(action)
+        total_reward += reward
+        if done:
+            break
+        if args.vis:
+            delta = 1/FPS - (time.time() - start_ts)
+            if delta > 0:
+                time.sleep(delta)
+
+    print('Total reward: %.2f' % total_reward)
+    print('Action count:', c)
+    if args.record:
+        env.env.close()
