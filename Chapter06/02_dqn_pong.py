@@ -92,6 +92,7 @@ def calc_loss(batch, net, tgt_net, device='cpu'):
     done_mask = torch.BoolTensor(dones).to(device)
 
     state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
+    # Disables tracking of gradients in autograd
     with torch.no_grad():
         next_state_values = tgt_net(new_states_v).max(1)[0]
         next_state_values[done_mask] = 0.0
