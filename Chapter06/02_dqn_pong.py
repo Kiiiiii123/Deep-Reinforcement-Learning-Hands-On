@@ -14,7 +14,7 @@ from tensorboardX import SummaryWriter
 
 
 DEFAULT_ENV_NAME = 'PongNoFrameskip-v4'
-MEAN_REWARD_BOUND = 19.0
+MEAN_REWARD_BOUND = 19
 
 GAMMA = 0.99
 BATCH_SIZE = 32
@@ -54,14 +54,15 @@ class Agent:
         self._reset()
 
     def _reset(self):
-        self.state = self.env.reset()
+        self.state = env.reset()
         self.total_reward = 0.0
 
+    @torch.no_grad()
     def play_step(self, net, epsilon=0.0, device='cpu'):
         done_reward = None
 
         if np.random.random() < epsilon:
-            action = self.env.action_space.sample()
+            action = env.action_space.sample()
         else:
             state_a = np.array([self.state], copy=False)
             state_v = torch.tensor(state_a).to(device)
@@ -77,6 +78,7 @@ class Agent:
         self.state = new_state
         if is_done:
             done_reward = self.total_reward
+            self._reset()
         return done_reward
 
 
@@ -90,9 +92,10 @@ def calc_loss(batch, net, tgt_net, device='cpu'):
     done_mask = torch.BoolTensor(dones).to(device)
 
     state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
-    next_state_values = tgt_net(new_states_v).max(1)[0]
-    next_state_values[done_mask] = 0.0
-    next_state_values = next_state_values.detach()
+    with torch.no_grad():
+        next_state_values = tgt_net(new_states_v).max(1)[0]
+        next_state_values[done_mask] = 0.0
+        next_state_values = next_state_values.detach()
 
     expected_state_action_values = rewards_v + next_state_values * GAMMA
     return nn.MSELoss()(state_action_values, expected_state_action_values)
@@ -101,7 +104,7 @@ def calc_loss(batch, net, tgt_net, device='cpu'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cuda', default=False, action='store_true', help='Enable cuda')
-    parser.add_argument('--env', default= DEFAULT_ENV_NAME, help='Name of the environment, default=' + DEFAULT_ENV_NAME)
+    parser.add_argument('--env', default=DEFAULT_ENV_NAME, help='Name of the environment, default=' + DEFAULT_ENV_NAME)
     args = parser.parse_args()
     device = torch.device('cuda' if args.cuda else 'cpu')
 
@@ -153,7 +156,7 @@ if __name__ == '__main__':
         if len(replay_buffer) < REPLAY_START_SIZE:
             continue
 
-        if frame_idx % SYNC_TARGET_FRAMES ==0:
+        if frame_idx % SYNC_TARGET_FRAMES == 0:
             tgt_net.load_state_dict(net.state_dict())
 
         optimizer.zero_grad()
