@@ -30,7 +30,7 @@ class DullAgent(ptan.agent.BaseAgent):
         self.action = action
 
     def __call__(self, observations: List[Any], state: Optional[List] = None) -> Tuple[List[int], Optional[List]]:
-        return [self.action for _ in observations], None
+        return [self.action for _ in observations], state
 
 
 if __name__ == '__main__':
