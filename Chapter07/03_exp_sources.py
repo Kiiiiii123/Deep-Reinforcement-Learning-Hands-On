@@ -3,7 +3,7 @@ import ptan
 from typing import List, Tuple, Any, Optional
 
 
-class ToyEnv(gym):
+class ToyEnv(gym.Env):
     def __init__(self):
         super(ToyEnv, self).__init__()
         self.observation_space = gym.spaces.Discrete(n=5)
@@ -17,9 +17,9 @@ class ToyEnv(gym):
     def step(self, action):
         is_done = self.step_index == 10
         if is_done:
-            return self.step_index % self.action_space.n, 0.0, is_done, {}
+            return self.step_index % self.observation_space.n, 0.0, is_done, {}
         self.step_index += 1
-        return self.step_index % self.action_space.n, float(action), self.step_index == 10, {}
+        return self.step_index % self.observation_space.n, float(action), self.step_index == 10, {}
 
 
 class DullAgent(ptan.agent.BaseAgent):
@@ -33,3 +33,35 @@ class DullAgent(ptan.agent.BaseAgent):
         return [self.action for _ in observations], None
 
 
+if __name__ == '__main__':
+    env = ToyEnv()
+    s = env.reset()
+    print('env.reset() -> %s' % s)
+    s = env.step(1)
+    print('env.step(1) -> %s' % str(s))
+    s = env.step(2)
+    print('env.step(2) -> %s' % str(s))
+
+    for _ in range(10):
+        r = env.step(0)
+        print(r)
+
+    agent = DullAgent(action=1)
+    print('agent:', agent([1, 2])[0])
+
+    env = ToyEnv()
+    agent = DullAgent(action=1)
+    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=2)
+    for idx, exp in enumerate(exp_source):
+        if idx > 15:
+            break
+        print(exp)
+
+    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=4)
+    print(next(iter(exp_source)))
+
+    exp_source = ptan.experience.ExperienceSource(env=[ToyEnv(), ToyEnv()], agent=agent, steps_count=2)
+    for idx, exp in enumerate(exp_source):
+        if idx > 4:
+            break
+        print(exp)
