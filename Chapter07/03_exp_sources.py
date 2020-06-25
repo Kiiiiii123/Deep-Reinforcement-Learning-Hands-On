@@ -65,3 +65,10 @@ if __name__ == '__main__':
         if idx > 4:
             break
         print(exp)
+
+    print('ExperienceSourceFirstLast')
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env=env, agent=agent, gamma=1.0, steps_count=1)
+    for idx, exp in enumerate(exp_source):
+        if idx > 10:
+            break
+        print(exp)
