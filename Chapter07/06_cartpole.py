@@ -7,6 +7,9 @@ import torch.nn.functional as F
 
 
 HIDDEN_SIZE = 128
+GAMMA = 0.9
+BUFFER_SIZE = 1000
+LR = 1e-3
 
 
 class Net(nn.Module):
@@ -29,3 +32,10 @@ if __name__ == '__main__':
 
     net = Net(obs_size, HIDDEN_SIZE, n_actions)
     tgt_net = ptan.agent.TargetNet(net)
+    selector = ptan.actions.ArgmaxActionSelector()
+    selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=1, selector=selector)
+    agent = ptan.agent.DQNAgent(net, selector)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env=env, agent=agent, gamma=GAMMA)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=BUFFER_SIZE)
+    optimizer = optim.Adam(net.parameters(), lr=LR)
+
