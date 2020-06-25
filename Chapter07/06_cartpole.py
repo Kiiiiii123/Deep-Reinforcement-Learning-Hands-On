@@ -31,7 +31,7 @@ class Net(nn.Module):
 @torch.no_grad()
 def unpack_batch(batch, net, gamma):
     states = []
-    actions= []
+    actions = []
     rewards = []
     last_states = []
     done_masks = []
@@ -52,7 +52,7 @@ def unpack_batch(batch, net, gamma):
     last_states_q_v = net(last_states_v)
     best_last_q_v = torch.max(last_states_q_v, dim=1)[0]
     best_last_q_v[done_masks] = 0.0
-    return states_v, actions_v, best_last_q_v * GAMMA + rewards_v
+    return states_v, actions_v, best_last_q_v * gamma + rewards_v
 
 
 if __name__ == '__main__':
@@ -87,11 +87,11 @@ if __name__ == '__main__':
             print('Congrats!')
             break
 
-        if len(buffer) < 2*BUFFER_SIZE:
+        if len(buffer) < 2*BATCH_SIZE:
             continue
 
         batch = buffer.sample(BATCH_SIZE)
-        states_v, actions_v, tgt_q_v = unpack_batch(batch, tgt_net, GAMMA)
+        states_v, actions_v, tgt_q_v = unpack_batch(batch, tgt_net.target_model, GAMMA)
         optimizer.zero_grad()
         q_v = net(states_v)
         q_v = q_v.gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
