@@ -24,7 +24,20 @@ class ModelActor(nn.Module):
 
 
 class ModelCritic(nn.Module):
+    def __init__(self, obs_size):
+        super(ModelCritic, self).__init__()
+        self.value = nn.Sequential(
+            nn.Linear(obs_size, HID_SIZE),
+            nn.ReLU(),
+            nn.Linear(HID_SIZE, HID_SIZE),
+            nn.ReLU(),
+            nn.Linear(HID_SIZE, 1)
+        )
+
+    def forward(self, x):
+        return self.value(x)
 
 
+class A2CAgent()
 
 
