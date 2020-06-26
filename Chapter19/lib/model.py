@@ -38,6 +38,6 @@ class ModelCritic(nn.Module):
         return self.value(x)
 
 
-class A2CAgent()
+
 
 
