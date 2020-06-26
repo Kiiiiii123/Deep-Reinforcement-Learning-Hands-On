@@ -38,6 +38,18 @@ class ModelCritic(nn.Module):
         return self.value(x)
 
 
+class AgentA2C(ptan.agent.BaseAgent):
+    def __init__(self, net, device='spu'):
+        self.net = net
+        self.device = device
 
-
+    def __call__(self, states, agent_states):
+        states_v = ptan.agent.float32_preprocessor(states).to(self.device)
+        mu_v = self.net(states_v)
+        mu = mu_v.data.cpu().numpy()
+        logstd = self.net.logstd.date.cpu().numpy()
+        rnd = np.random.normal(size=logstd.shape)
+        actions = mu + np.exp(logstd) * rnd
+        actions = np.clip(actions, -1, 1)
+        return actions, agent_states
 
