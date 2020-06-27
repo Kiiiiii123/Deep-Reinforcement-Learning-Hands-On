@@ -1,11 +1,12 @@
 import os
+import time
 import ptan
 import gym
 import roboschool
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model
+from lib import model, test_net
 
 import numpy as np
 import torch
@@ -17,6 +18,7 @@ ENV_ID = 'RoboschoolHalfCheetah-v1'
 ENVS_COUNT = 16
 GAMMA = 0.99
 STEPS_COUNT = 5
+TEST_ITERS = 100000
 
 
 if __name__ == '__main__':
@@ -46,4 +48,14 @@ if __name__ == '__main__':
     best_reward = None
     with ptan.common.utils.RewardTracker(writer) as tracker:
         with ptan.common.utils.TBMeanTracker(writer, batch_size=100) as tb_tracker:
+            for step_idx, exp in exp_source:
+                rewards_steps = exp_source.pop_rewards_steps()
+                if rewards_steps:
+                    rewards, steps = zip(*rewards_steps)
+                    tb_tracker.track('episode_steps', np.mean(steps), step_idx)
+                    tracker.reward(np.mean(rewards), step_idx)
+
+                if step_idx % TEST_ITERS == 0:
+                    ts = time.time()
+                    rewards, steps = test_net(model_act, test_env, device=device)
 
