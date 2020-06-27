@@ -63,4 +63,5 @@ if __name__ == '__main__':
                 if step_idx % TEST_ITERS == 0:
                     ts = time.time()
                     rewards, steps = test_net(model_act, test_env, device=device)
-
+                    print('Test done in %.2f sec, reward %.3f, steps %d' % (time.time() - ts, rewards, steps))
+                    
