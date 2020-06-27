@@ -10,7 +10,7 @@ from lib import model, test_net
 
 import numpy as np
 import torch
-import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
 
 
@@ -19,6 +19,8 @@ ENVS_COUNT = 16
 GAMMA = 0.99
 STEPS_COUNT = 5
 TEST_ITERS = 100000
+LEARNING_RATE_ACTOR = 1e-5
+LEARNING_RATE_CRITIC = 1e-3
 
 
 if __name__ == '__main__':
@@ -43,6 +45,9 @@ if __name__ == '__main__':
     writer = SummaryWriter(comment='-a2c' + args.name)
     agent = model.AgentA2C(model_act, device=device)
     exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, GAMMA, STEPS_COUNT)
+
+    opt_act = optim.Adam(model_act.parameters(), lr=LEARNING_RATE_ACTOR)
+    opt_crt = optim.Adam(model_crt.parameters(), lr=LEARNING_RATE_CRITIC)
 
     exp_batch = []
     best_reward = None
