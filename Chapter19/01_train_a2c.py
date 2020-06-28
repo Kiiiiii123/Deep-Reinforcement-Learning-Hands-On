@@ -6,7 +6,7 @@ import roboschool
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model, test_net
+from lib import model, test_net, common
 
 import numpy as np
 import torch
