@@ -22,3 +22,9 @@ def test_net(net, env, count=10, device='cpu'):
             if done:
                 break
     return rewards / count, steps / count
+
+
+def calc_logprob(mu_v, logstd_v, actions_v):
+    p1 = - ((mu_v - actions_v) ** 2) / (2*torch.exp(logstd_v).clamp(min=1e-3))
+    p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
+    return p1 + p2

@@ -88,5 +88,7 @@ if __name__ == '__main__':
                 loss_value_v.backward()
                 opt_crt.step()
 
+                opt_act.zero_grad()
+
 
 
