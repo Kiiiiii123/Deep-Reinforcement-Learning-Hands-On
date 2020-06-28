@@ -2,11 +2,12 @@ import os
 import time
 import ptan
 import gym
+import math
 import roboschool
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model, test_net, common
+from lib import model, test_net, common, calc_logprob
 
 import numpy as np
 import torch
@@ -22,6 +23,7 @@ TEST_ITERS = 100000
 LEARNING_RATE_ACTOR = 1e-5
 LEARNING_RATE_CRITIC = 1e-3
 BATCH_SIZE = 32
+ENTROPY_BETA = 1e-3
 
 
 if __name__ == '__main__':
@@ -89,6 +91,20 @@ if __name__ == '__main__':
                 opt_crt.step()
 
                 opt_act.zero_grad()
+                mu_v = net_act(states_v)
+                adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
+                log_prob_v = adv_v * calc_logprob(mu_v, net_act.logstd, actions_v)
+                loss_policy_v = -log_prob_v.mean()
+                entropy_loss_v = ENTROPY_BETA * (-(torch.log(2*math.pi*torch.exp(net_act.logstd)) + 1)/2).mean()
+                loss_v = loss_policy_v + entropy_loss_v
+                loss_v.backward()
+                opt_act.step()
 
-
+                tb_tracker.track('advantage', adv_v, step_idx)
+                tb_tracker.track('values', value_v, step_idx)
+                tb_tracker.track('batch_rewards', vals_ref_v, step_idx)
+                tb_tracker.track('loss_entropy', entropy_loss_v, step_idx)
+                tb_tracker.track('loss_policy', loss_policy_v, step_idx)
+                tb_tracker.track('loss_value', loss_value_v, step_idx)
+                tb_tracker.track('loss_total', loss_v, step_idx)
 
