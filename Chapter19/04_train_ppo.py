@@ -79,7 +79,7 @@ if __name__ == '__main__':
             rewards_steps = exp_source.pop_rewards_steps()
             if rewards_steps:
                 rewards, steps = zip(*rewards_steps)
-                tb_tracker.track('episode_steps', np.mean(steps), step_idx)
+                writer.add_scalar('episode_steps', np.mean(steps), step_idx)
                 tracker.reward(np.mean(rewards), step_idx)
 
             if step_idx % TEST_ITERS == 0:
@@ -96,34 +96,33 @@ if __name__ == '__main__':
                         torch.save(net_act.state_dict(), fname)
                     best_reward = rewards
 
-            exp_batch.append(exp)
-            if len(exp_batch) < BATCH_SIZE:
+            trajectory.append(exp)
+            if len(trajectory) < TRAJECTORY_SIZE:
                 continue
 
-            states_v, actions_v, vals_ref_v = common.unpack_bacth_a2c(exp_batch, net_crt, GAMMA ** STEPS_COUNT, device)
-            exp_batch.clear()
+            traj_states = [t[0].state for t in trajectory]
+            traj_states_v = torch.FloatTensor(traj_states).to(device)
+            traj_actions = [t[0].action for t in trajectory]
+            traj_actions_v = torch.FloatTensor(traj_actions).to(device)
+             = calc_adv_ref(trajectory, net_crt, traj_states_v, device=device)
 
-            opt_crt.zero_grad()
-            value_v = net_crt(states_v)
-            loss_value_v = F.mse_loss(value_v.squeeze(-1), vals_ref_v)
-            loss_value_v.backward()
-            opt_crt.step()
+            #states_v, actions_v, vals_ref_v = common.unpack_bacth_a2c(exp_batch, net_crt, GAMMA ** STEPS_COUNT, device)
+            #exp_batch.clear()
 
-            opt_act.zero_grad()
-            mu_v = net_act(states_v)
-            adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
-            log_prob_v = adv_v * calc_logprob(mu_v, net_act.logstd, actions_v)
-            loss_policy_v = -log_prob_v.mean()
-            entropy_loss_v = ENTROPY_BETA * (-(torch.log(2*math.pi*torch.exp(net_act.logstd)) + 1)/2).mean()
-            loss_v = loss_policy_v + entropy_loss_v
-            loss_v.backward()
-            opt_act.step()
+            #opt_crt.zero_grad()
+            #value_v = net_crt(states_v)
+            #loss_value_v = F.mse_loss(value_v.squeeze(-1), vals_ref_v)
+            #loss_value_v.backward()
+            #opt_crt.step()
 
-            tb_tracker.track('advantage', adv_v, step_idx)
-            tb_tracker.track('values', value_v, step_idx)
-            tb_tracker.track('batch_rewards', vals_ref_v, step_idx)
-            tb_tracker.track('loss_entropy', entropy_loss_v, step_idx)
-            tb_tracker.track('loss_policy', loss_policy_v, step_idx)
-            tb_tracker.track('loss_value', loss_value_v, step_idx)
-            tb_tracker.track('loss_total', loss_v, step_idx)
+            #opt_act.zero_grad()
+            #mu_v = net_act(states_v)
+            #adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
+            #log_prob_v = adv_v * calc_logprob(mu_v, net_act.logstd, actions_v)
+            #loss_policy_v = -log_prob_v.mean()
+            #entropy_loss_v = ENTROPY_BETA * (-(torch.log(2*math.pi*torch.exp(net_act.logstd)) + 1)/2).mean()
+            #loss_v = loss_policy_v + entropy_loss_v
+            #loss_v.backward()
+            #opt_act.step()
+
 
