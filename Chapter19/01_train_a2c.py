@@ -45,7 +45,7 @@ if __name__ == '__main__':
     print(net_act)
     print(net_crt)
 
-    writer = SummaryWriter(comment='-a2c' + args.name)
+    writer = SummaryWriter(comment='-a2c_' + args.name)
     agent = model.AgentA2C(net_act, device=device)
     exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, GAMMA, STEPS_COUNT)
 
