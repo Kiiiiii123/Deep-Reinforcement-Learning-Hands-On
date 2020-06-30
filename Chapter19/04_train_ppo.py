@@ -162,6 +162,7 @@ if __name__ == '__main__':
                     surr_obj_v = batch_adv_v * ratio_v
                     clamp_ratio_v = torch.clamp(ratio_v, 1.0 - PPO_EPSILON, 1.0 + PPO_EPSILON)
                     clipped_surr_v = batch_adv_v * clamp_ratio_v
+                    # calculate the expectation
                     loss_policy_v = -torch.min(surr_obj_v, clipped_surr_v).mean()
                     loss_policy_v.backward()
                     opt_act.step()
