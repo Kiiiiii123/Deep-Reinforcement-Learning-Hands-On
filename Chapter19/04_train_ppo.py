@@ -133,6 +133,41 @@ if __name__ == '__main__':
             trajectory = trajectory[:-1]
             old_logprob_v = old_logprob_v[:-1].detach()
 
+            sum_loss_value = 0.0
+            sum_loss_policy = 0.0
+            count_steps = 0
+
+            for epoch in range(PPO_EPOCHES):
+                for batch_ofs in range(0, len(trajectory), PPO_BATCH_SIZE):
+                    batch_l = batch_ofs + PPO_BATCH_SIZE
+                    states_v = traj_states_v[batch_ofs:batch_l]
+                    actions_v = traj_actions_v[batch_ofs:batch_l]
+                    batch_adv_v = traj_adv_v[batch_ofs:batch_l]
+                    batch_adv_v = batch_adv_v.unsqueeze(-1)
+                    batch_ref_v = traj_ref_v[batch_ofs:batch_l]
+                    batch_old_logprob_v = old_logprob_v[batch_ofs:batch_l]
+
+                    # critic training
+                    opt_crt.zero_grad()
+                    value_v = net_crt(states_v)
+                    loss_value_v = F.mse_loss(value_v.squeeze(-1), batch_ref_v)
+                    loss_value_v.backward()
+                    opt_crt.step()
+
+                    # actor training
+                    opt_act.zero_grad()
+                    mu_v = net_act(states_v)
+                    logprob_pi_v = calc_logprob(mu_v, net_act.logstd, actions_v)
+                    ratio_v = torch.exp(logprob_pi_v, batch_old_logprob_v)
+                    surr_obj_v = batch_adv_v * ratio_v
+                    clamp_ratio_v = torch.clamp(ratio_v, 1.0 - PPO_EPS, 1.0 + PPO_EPS)
+                    clipped_surr_v = batch_adv_v * clamp_ratio_v
+                    loss_policy_v = -torch.min(surr_obj_v, clipped_surr_v).mean()
+                    loss_policy_v.backward()
+                    opt_act.step()
+
+
+
 
 
 
