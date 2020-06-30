@@ -42,6 +42,23 @@ def calc_adv_ref(trajectory, net_crt, states_v, device='cpu'):
     values = values_v.squeeze().data.cpu().numpy()
     # generalized advantage estimator: smoothed version of the advantage
     last_gae = 0.0
+    result_adv = []
+    result_ref = []
+    for val, next_val, (exp,) in zip(reversed(values[:-1]),
+                                     reversed(values[1:]),
+                                     reversed(trajectory[:-1])):
+        if exp.done:
+            delta = exp.reward - val
+            last_gae = delta
+        else:
+            delta = exp.reward + next_val - val
+            last_gae = delta + GAMMA * GAE_LAMBDA * last_gae
+        result_adv.append(last_gae)
+        result_ref.append(last_gae + val)
+
+    adv_v = torch.FloatTensor(list(reversed(result_adv))).to(device)
+    ref_v = torch.FloatTensor(list(reversed(result_ref))).to(device)
+    return adv_v, ref_v
 
     
 if __name__ == '__main__':
@@ -104,7 +121,14 @@ if __name__ == '__main__':
             traj_states_v = torch.FloatTensor(traj_states).to(device)
             traj_actions = [t[0].action for t in trajectory]
             traj_actions_v = torch.FloatTensor(traj_actions).to(device)
-             = calc_adv_ref(trajectory, net_crt, traj_states_v, device=device)
+            traj_adv_v, traj_ref_v = calc_adv_ref(trajectory, net_crt, traj_states_v, device=device)
+
+
+
+
+
+
+
 
             #states_v, actions_v, vals_ref_v = common.unpack_bacth_a2c(exp_batch, net_crt, GAMMA ** STEPS_COUNT, device)
             #exp_batch.clear()
