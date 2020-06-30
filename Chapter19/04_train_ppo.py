@@ -121,32 +121,18 @@ if __name__ == '__main__':
             traj_states_v = torch.FloatTensor(traj_states).to(device)
             traj_actions = [t[0].action for t in trajectory]
             traj_actions_v = torch.FloatTensor(traj_actions).to(device)
+
             traj_adv_v, traj_ref_v = calc_adv_ref(trajectory, net_crt, traj_states_v, device=device)
+            mu_v = net_act(traj_actions_v)
+            old_logprob_v = calc_logprob(mu_v, net_act.logstd, traj_actions_v)
+
+            # normalize advantages
+            traj_adv_v = (traj_adv_v - torch.mean(traj_adv_v)) / torch.std(traj_adv_v)
+
+            # drop last entry from the trajectory, the adv and ref value are calculated without it
+            trajectory = trajectory[:-1]
+            old_logprob_v = old_logprob_v[:-1].detach()
 
 
-
-
-
-
-
-
-            #states_v, actions_v, vals_ref_v = common.unpack_bacth_a2c(exp_batch, net_crt, GAMMA ** STEPS_COUNT, device)
-            #exp_batch.clear()
-
-            #opt_crt.zero_grad()
-            #value_v = net_crt(states_v)
-            #loss_value_v = F.mse_loss(value_v.squeeze(-1), vals_ref_v)
-            #loss_value_v.backward()
-            #opt_crt.step()
-
-            #opt_act.zero_grad()
-            #mu_v = net_act(states_v)
-            #adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
-            #log_prob_v = adv_v * calc_logprob(mu_v, net_act.logstd, actions_v)
-            #loss_policy_v = -log_prob_v.mean()
-            #entropy_loss_v = ENTROPY_BETA * (-(torch.log(2*math.pi*torch.exp(net_act.logstd)) + 1)/2).mean()
-            #loss_v = loss_policy_v + entropy_loss_v
-            #loss_v.backward()
-            #opt_act.step()
 
 
