@@ -166,7 +166,11 @@ if __name__ == '__main__':
                     loss_policy_v.backward()
                     opt_act.step()
 
+                    sum_loss_value += loss_value_v.item()
+                    sum_loss_policy += loss_policy_v.item()
+                    count_steps += 1
 
+            trajectory.clear()
 
 
 
