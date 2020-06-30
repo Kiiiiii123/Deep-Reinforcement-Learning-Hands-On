@@ -23,8 +23,8 @@ TRAJECTORY_SIZE = 2049
 LEARNING_RATE_ACTOR = 1e-5
 LEARNING_RATE_CRITIC = 1e-4
 
-PPO_EPS = 0.2
-PPO_EPOCHES = 10
+PPO_EPSILON = 0.2
+PPO_TRAIN_EPOCHES = 10
 PPO_BATCH_SIZE = 64
 
 TEST_ITERS = 100000
@@ -137,7 +137,7 @@ if __name__ == '__main__':
             sum_loss_policy = 0.0
             count_steps = 0
 
-            for epoch in range(PPO_EPOCHES):
+            for epoch in range(PPO_TRAIN_EPOCHES):
                 for batch_ofs in range(0, len(trajectory), PPO_BATCH_SIZE):
                     batch_l = batch_ofs + PPO_BATCH_SIZE
                     states_v = traj_states_v[batch_ofs:batch_l]
@@ -158,9 +158,9 @@ if __name__ == '__main__':
                     opt_act.zero_grad()
                     mu_v = net_act(states_v)
                     logprob_pi_v = calc_logprob(mu_v, net_act.logstd, actions_v)
-                    ratio_v = torch.exp(logprob_pi_v, batch_old_logprob_v)
+                    ratio_v = torch.exp(logprob_pi_v - batch_old_logprob_v)
                     surr_obj_v = batch_adv_v * ratio_v
-                    clamp_ratio_v = torch.clamp(ratio_v, 1.0 - PPO_EPS, 1.0 + PPO_EPS)
+                    clamp_ratio_v = torch.clamp(ratio_v, 1.0 - PPO_EPSILON, 1.0 + PPO_EPSILON)
                     clipped_surr_v = batch_adv_v * clamp_ratio_v
                     loss_policy_v = -torch.min(surr_obj_v, clipped_surr_v).mean()
                     loss_policy_v.backward()
@@ -171,6 +171,11 @@ if __name__ == '__main__':
                     count_steps += 1
 
             trajectory.clear()
+            writer.add_scalar('advantage', traj_adv_v.mean().item(), step_idx)
+            writer.add_scalar('values', traj_ref_v.mean().item(), step_idx)
+            writer.add_scalar('loss_value', sum_loss_value / count_steps, step_idx)
+            writer.add_scalar('loss_policy', sum_loss_policy / count_steps, step_idx)
+
 
 
 
