@@ -39,7 +39,7 @@ class ModelCritic(nn.Module):
 
 
 class AgentA2C(ptan.agent.BaseAgent):
-    def __init__(self, net, device='spu'):
+    def __init__(self, net, device='cpu'):
         self.net = net
         self.device = device
 
